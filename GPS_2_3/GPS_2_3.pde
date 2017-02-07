@@ -16,6 +16,7 @@ PVector lonLims = new PVector(-0.3,0.05);
 
 float driftLimit = 0.01;
 
+//line drawing parameters
 float trackAlpha = 50;
 float strokoo = 2;
 
@@ -23,11 +24,11 @@ float strokoo = 2;
   set to -1 to draw all tracks in parallel
   set to 0 or more to draw each track individually
 */
-int selectOneFile = -1;
+int selectOneFile = 1;
 int maxFile = 13;
-boolean vidoCapture = true;
-boolean drawAll = false;
-boolean findLimits = false;
+boolean vidoCapture = false;
+boolean drawAll = true;
+boolean findLimits = true;
 
 void setup()
 {
@@ -47,7 +48,7 @@ void setup()
       lonLims = new PVector(180,-180);
   }
   
-  for(int f = 1; f<=maxFile; f++)
+  for(int f = 0; f<=maxFile; f++)
   {
       currentTimeIndex.add(1);
       //startIndex.add(0);
@@ -58,12 +59,7 @@ void setup()
       float [] lats = route.getFloatColumn("LATITUDE");
       float [] lons = route.getFloatColumn("LONGITUDE");
           
-      //correct for stupidity
-      //if(selectOneFile>-1) 
-      //{
-      //    latLims = new PVector(lats[0], lats[0]);
-      //    lonLims = new PVector(lons[0], lons[0]);
-      //}
+    
       
       String [] ew = route.getStringColumn("E/W");
       for (int i=1; i<lons.length; i++)
@@ -162,7 +158,7 @@ void draw()
   
   if(drawAll)
   {
-      for(int f = 0; f<maxFile; f++)
+      for(int f = 0; f<allLats.size(); f++)
       {
           if((selectOneFile>-1 && f==selectOneFile) || selectOneFile<0)
           {
