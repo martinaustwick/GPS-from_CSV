@@ -24,17 +24,24 @@ float strokoo = 2;
   set to -1 to draw all tracks in parallel
   set to 0 or more to draw each track individually
 */
-int selectOneFile = 1;
+int selectOneFile = -1;
 int maxFile = 13;
 boolean vidoCapture = false;
 boolean drawAll = true;
 boolean findLimits = true;
+
+//add attribution text here SARAH WISE AND MARTIN ZALTZ AUSTWICK (C) 2017
+PImage casa, ftc;
+
+
 
 void setup()
 {
   size(800, 800);
   frameRate(90);
   mamTime = startMam;
+  
+  loadLogos();
   
   allLats = new ArrayList<float[]>();
   allLons = new ArrayList<float[]>();
@@ -186,17 +193,19 @@ void draw()
           }
           
       }
+      drawLogos();
       
       if(selectOneFile>-1 && selectOneFile<=maxFile)
       {
         fill(0);
-        text(lonLims.x + " " + latLims.y, 0,20);
-        text(lonLims.y + " " + latLims.x,width-150, height-20);
+        //text(lonLims.x + " " + latLims.y, 0,20);
+        //text(lonLims.y + " " + latLims.x,width-150, height-20);
         saveFrame("stillz/Track" + str(selectOneFile) + ".jpg");
         selectOneFile++;
       }
       else
       {
+          
           saveFrame("stillz/AllTrac.jpg");
           noLoop();
       }
@@ -240,6 +249,7 @@ void draw()
         }
       }
       elClocko();
+      drawLogos();
   }
 
   //count = (count+1);
@@ -331,4 +341,18 @@ void elClocko()
     fill(0);
     String textor = str(mamTime/3600) + ":" + nf((mamTime/60)%60,2,0) + ":" + nf(mamTime%60,2,0);
     text(textor, 20,30);
+}
+
+void loadLogos()
+{
+    casa = loadImage("logos/casa_logo.jpg");
+    casa.resize(90,120);
+    ftc = loadImage("logos/ftc.png");
+    ftc.resize(200,120);
+}
+
+void drawLogos()
+{
+    image(casa, 10, height-casa.height-10);
+    image(ftc, 30+casa.width, height-ftc.height-10);
 }
