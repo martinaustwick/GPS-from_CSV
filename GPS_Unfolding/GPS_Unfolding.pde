@@ -1,14 +1,31 @@
-int count = 0;
-ArrayList<float []>allLats, allLons, mams;
-ArrayList<Integer> currentTimeIndex;
+/* 
+  Copyright (2017) by Martin Zaltz Austwick, Sarah Wise, and University College London
+  Licensed under the Academic Free License version 3.0
+  See the file "LICENSE" for more information
+*/
 
-String baseString = "";
+// imports to include Unfolding library
+import de.fhpotsdam.unfolding.*;
+import de.fhpotsdam.unfolding.geo.*;
+import de.fhpotsdam.unfolding.utils.*;
+import de.fhpotsdam.unfolding.providers.*;
+import de.fhpotsdam.unfolding.data.*;
+import de.fhpotsdam.unfolding.marker.*;
+import java.util.List;
 
 
-int startMam = 6*3600+(40*60);
-int mamTime;
-int mamChange = 5;
+// handling the data
 
+String baseString = ""; // prefix for csv files (numbered 0-n)
+int selectOneFile = -1; // -1 to draw all tracks at once, 0+ to draw each track individually
+int maxFile = 13;
+
+//
+// the physical world
+//
+UnfoldingMap map;
+
+// world parameters
 PVector latLims = new PVector(51.5,51.6);
 PVector lonLims = new PVector(-0.3,0.05);
 //PVector latLims = new PVector(51, 53);
@@ -16,38 +33,53 @@ PVector lonLims = new PVector(-0.3,0.05);
 
 float driftLimit = 0.01;
 
-//line drawing parameters
+// storage for data
+int count = 0;
+ArrayList<float []>allLats, allLons, mams;
+ArrayList<Integer> currentTimeIndex;
+
+// time parameters
+int startMam = 6*3600+(40*60);
+int mamChange = 5;
+int mamTime;
+
+// graphical parameters
 float trackAlpha = 50;
 float strokoo = 2;
 
-/*
-  set to -1 to draw all tracks in parallel
-  set to 0 or more to draw each track individually
-*/
-int selectOneFile = -1;
-int maxFile = 13;
+// visualising the output
 boolean vidoCapture = false;
 boolean drawAll = true;
 boolean findLimits = true;
 
-//add attribution text here SARAH WISE AND MARTIN ZALTZ AUSTWICK (C) 2017
+// images
 PImage casa, ftc;
+color[] palette = {color(166,206,227, 100), color(31,120,180, 100), color(178,223,138, 100), color(51,160,44, 100), color(251,154,153, 100), color(227,26,28, 100), color(253,191,111, 100), color(255,127,0, 100), color(202,178,214)};
 
-
-
+/* Initialisation
+*/
 void setup()
 {
   size(800, 800);
+  smooth();
   frameRate(90);
   mamTime = startMam;
   
   loadLogos();
   
+  // set up the UnfoldingMap to hold the data
+  map = new UnfoldingMap(this, new StamenMapProvider.WaterColor());//TonerBackground());
+  map.zoomToLevel(14);
+  map.setZoomRange(9, 17); // prevent zooming too far out
+  MapUtils.createDefaultEventDispatcher(this, map);
+  
+  // set up a holder for the lines we define here
+  List<Marker> traces = new ArrayList<Marker>();
+  
   allLats = new ArrayList<float[]>();
   allLons = new ArrayList<float[]>();
   mams = new ArrayList<float[]>();
   currentTimeIndex =  new ArrayList<Integer>();
-  //startIndex = new ArrayList<Integer>();
   
   if(findLimits)
   {
@@ -58,7 +90,9 @@ void setup()
   for(int f = 0; f<=maxFile; f++)
   {
       currentTimeIndex.add(1);
-      //startIndex.add(0);
+      
+      List<Location> traceLocations = new ArrayList<Location>();
+
       
       String filename = baseString + str(f) + ".csv";
       Table route = loadTable(filename, "header");
@@ -86,6 +120,7 @@ void setup()
               if(lats[i]>latLims.y) latLims.y=lats[i];
             }
         }
+        traceLocations.add(new Location(lats[i], lons[i]));
       }
 //      
       //timings
@@ -101,6 +136,11 @@ void setup()
       mams.add(mam);
       allLats.add(lats);
       allLons.add(lons);
+      
+      SimpleLinesMarker myTrace = new SimpleLinesMarker(traceLocations);
+      myTrace.setStrokeWeight((int)strokoo);
+      myTrace.setColor(palette[int(random(palette.length))]);
+      traces.add(myTrace);
   }
   
   count = 1;
@@ -110,6 +150,8 @@ void setup()
   //if(selectOneFile>-1)  background(255);
   //else background(255);
   
+  map.addMarkers(traces);
+  
   background(255);
   noStroke();
   colorMode(HSB);
@@ -118,6 +160,10 @@ void setup()
   latLims = bufferVals(latLims, 0.2);
   println(latLims);
   println(lonLims);
+  
+  Location centrePoint = 
+    new Location(0.5 * (latLims.x + latLims.y), 0.5 * (lonLims.x + lonLims.y));
+  map.panTo(centrePoint);
   
   //dynamic tweaking of aspect; assume a fixed height for this
   float midLat = 0.5*(latLims.y+latLims.x);
@@ -163,8 +209,8 @@ void setLimits(float[] ons, float[] ats)
 void draw()
 {
   //println(frameRate);
-  
-  if(drawAll)
+   map.draw(); 
+/*  if(drawAll)
   {
       for(int f = 0; f<allLats.size(); f++)
       {
@@ -267,6 +313,7 @@ void draw()
     //}
     noLoop();
   }
+  */
 }
 
 boolean drift(float a, float b)
@@ -348,8 +395,8 @@ void loadLogos()
 {
 //    casa = loadImage("logos/casa_logo.jpg");
 //    casa.resize(90,120);
-    ftc = loadImage("logos/ftc.png");
-    ftc.resize(200,120);
+//    ftc = loadImage("logos/ftc.png");
+//   ftc.resize(200,120);
 }
 
 void drawLogos()
