@@ -125,9 +125,9 @@ void setup()
   float dx = (lonLims.y-lonLims.x);
   int w = int(800*cos(radians(midLat))*dx/dy);
   
-  size(w, 800);
-//  surface.setResizable(true);
-//  surface.setSize(w, 800);
+//  size(w, 800);
+  surface.setResizable(true);
+  surface.setSize(w, 800);
 }
 
 PVector bufferVals(PVector maxmin, float percentageBuffer)
