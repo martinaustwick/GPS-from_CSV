@@ -4,42 +4,28 @@
   See the file "LICENSE" for more information
 */
 
-
-// imports to include Unfolding library
-import de.fhpotsdam.unfolding.*;
-import de.fhpotsdam.unfolding.geo.*;
-import de.fhpotsdam.unfolding.utils.*;
-import de.fhpotsdam.unfolding.providers.*;
-import de.fhpotsdam.unfolding.data.*;
-import de.fhpotsdam.unfolding.marker.*;
 import java.util.List;
-//
-//import processing.opengl.*;
-import codeanticode.glgraphics.*;
-import processing.opengl.*;
 
-
+import de.fhpotsdam.unfolding.*;
 import de.fhpotsdam.unfolding.core.*;
+import de.fhpotsdam.unfolding.data.*;
 import de.fhpotsdam.unfolding.events.*;
-import de.fhpotsdam.unfolding.mapdisplay.AbstractMapDisplay;
-import de.fhpotsdam.unfolding.tiles.MBTilesLoaderUtils;
+import de.fhpotsdam.unfolding.geo.*;
+import de.fhpotsdam.unfolding.marker.*;
+import de.fhpotsdam.unfolding.providers.*;
+import de.fhpotsdam.unfolding.utils.*;
+
 import de.fhpotsdam.unfolding.geo.MercatorProjection;
-
-
+import de.fhpotsdam.unfolding.mapdisplay.AbstractMapDisplay;
 import de.fhpotsdam.unfolding.mapdisplay.MapDisplayFactory;
+import de.fhpotsdam.unfolding.tiles.MBTilesLoaderUtils;
 
-// handling the data
-
+//
+// identifying the data to utilise
+//
 String baseString = ""; // prefix for csv files (numbered 0-n)
 int selectOneFile = -1; // -1 to draw all tracks at once, 0+ to draw each track individually
 int maxFile = 13;
-
-//
-// the physical world
-//
-UnfoldingMap map;
-UnfoldingMap map2;
-UnfoldingMap currentMap;
 
 // world parameters
 PVector latLims = new PVector(51.5,51.6);
@@ -47,31 +33,35 @@ PVector lonLims = new PVector(-0.3,0.05);
 
 float driftLimit = 0.01;
 
-// storage for data
-int count = 0;
-ArrayList<float []>allLats, allLons, mams;
-ArrayList<Integer> currentTimeIndex;
-
 // time parameters
 int startMam = 6*3600+(40*60);
 int mamChange = 5;
-int mamTime;
 
 // graphical parameters
 float trackAlpha = 50;
 float strokoo = 5;//2;
-
-// visualising the output
-boolean vidoCapture = false;
-boolean drawAll = true;
+boolean paused = false;
 boolean findLimits = true;
+
+//
+// storage for data
+//
+List<List<Location>> traceRecords = new ArrayList<List<Location>> ();
+List<Marker> traces = new ArrayList<Marker>();
+List<Marker> pointTraces = new ArrayList<Marker>();
+
+//
+// the physical world
+//
+UnfoldingMap map;
+
+
+int mamTime;
+int timeIndex;
+
 
 // images
 PImage casa, ftc;
-color[] palette = {color(166,206,227, 100), color(31,120,180, 100), color(178,223,138, 100), color(51,160,44, 100), color(251,154,153, 100), color(227,26,28, 100), color(253,191,111, 100), color(255,127,0, 100), color(202,178,214)};
-
-  // set up a holder for the lines we define here
-List<Marker> traces = new ArrayList<Marker>();
 
 
 // Initialisation
@@ -84,20 +74,22 @@ void setup()
   mamTime = startMam;
   
   loadLogos();
+
+  String tilesStr = "jdbc:sqlite:" + sketchPath("./data/tiles/FTC3.mbtiles");
   
   // set up the UnfoldingMap to hold the data
-  map = new UnfoldingMap(this, new StamenMapProvider.TonerBackground());//WaterColor());//
+  
+  map = new UnfoldingMap(this, new MBTilesMapProvider(tilesStr));
+          //new StamenMapProvider.TonerBackground()); //(alternate tilings)
+          //new StamenMapProvider.WaterColor());
   map.zoomToLevel(14);
-  map.setZoomRange(9, 17); // prevent zooming too far out
+  map.setZoomRange(12, 17); // prevent zooming too far out
   MapUtils.createDefaultEventDispatcher(this, map);
   
   // set up a holder for the lines we define here
   List<Marker> traces = new ArrayList<Marker>();
+  List<PositionRecord> myRoutes = new ArrayList<PositionRecord>();
   
-  allLats = new ArrayList<float[]>();
-  allLons = new ArrayList<float[]>();
-  mams = new ArrayList<float[]>();
-  currentTimeIndex =  new ArrayList<Integer>();
   
   if(findLimits)
   {
@@ -106,24 +98,31 @@ void setup()
   }
   
   for(int f = 0; f<=maxFile; f++)
-  {
-      currentTimeIndex.add(1);
-      
-      List<Location> traceLocations = new ArrayList<Location>();
+  {      
+      //List<Location> traceLocations = new ArrayList<Location>();
 
-      
+      // open the file and read it into a table
       String filename = baseString + str(f) + ".csv";
       Table route = loadTable(filename, "header");
+
+      // visualise the names of the columns
       //println((Object[])route.getColumnTitles());
+
+      // extract columns of data from the table
       float [] lats = route.getFloatColumn("LATITUDE");
-      float [] lons = route.getFloatColumn("LONGITUDE");
-          
-    
-      
+      float [] lons = route.getFloatColumn("LONGITUDE");    
       String [] ew = route.getStringColumn("E/W");
+      String [] ns = route.getStringColumn("N/S");
+      String [] time = route.getStringColumn("LOCAL TIME");
+
+      PositionRecord prevRecord = null;
+
+      // iterate over the records, clean them accordingly, and store them
       for (int i=1; i<lons.length; i++)
       {
+        // adjust for east or west
         if (ew[i].equals("W")) lons[i] *=-1;
+        if (ns[i].equals("S")) lats[i] *=-1;
         
         if(findLimits)
         {
@@ -138,48 +137,50 @@ void setup()
               if(lats[i]>latLims.y) latLims.y=lats[i];
             }
         }
-        traceLocations.add(new Location(lats[i], lons[i]));
+        
+        // extract time information
+        String [] timeLine = split(time[i],":");
+        int myTime = 3600*int(timeLine[0]) + 60*int(timeLine[1]) + int(timeLine[2]);
+
+        // save the record as a PositionRecord
+        PositionRecord pr = new PositionRecord( myTime, new Location(lats[i], lons[i]));
+        pr.setPrev(prevRecord);
+        prevRecord = pr;
+        
+        // save the record as a LinesMarker object!
+        //traceLocations.add(new Location(lats[i], lons[i]));
       }
-//      
-      //timings
-      String [] time = route.getStringColumn("LOCAL TIME");
-      //println(time[0]);
-      float [] mam = new float[time.length];
-      for (int i=0; i<time.length; i++)
-      {
-         String [] timeLine = split(time[i],":");
-         //println(timeLine);
-         mam[i] = 3600*float(timeLine[0]) + 60*float(timeLine[1]) + float(timeLine[2]);
-      }
-      mams.add(mam);
-      allLats.add(lats);
-      allLons.add(lons);
+
+      // 
+      PositionRecord head = getHead(prevRecord);
+      AnimatedPointMarker myRoute = new AnimatedPointMarker(head);
       
-      SimpleLinesMarker myTrace = new SimpleLinesMarker(traceLocations);
+//      SimpleLinesMarker myTrace = new SimpleLinesMarker(traceLocations);
+//      SimplePointMarker myPoint = new SimplePointMarker(head.position);//traceLocations.get(0));
+      myRoute.setColor(color(0,255,255,200));
+      myRoute.setStrokeWeight((int)strokoo*2);
+      pointTraces.add(myRoute);
+/*      traceRecords.add(traceLocations);
       myTrace.setStrokeWeight((int)strokoo);
       myTrace.setColor(color(255,0,0,75));
-      myTrace.setStrokeColor(color(255,0,0,250));
+      myTrace.setStrokeColor(color(255,0,0,100));
 //      myTrace.setColor(palette[int(random(palette.length))]);
       traces.add(myTrace);
+  */    
   }
   
-  count = 1;
+  
+//  map.addMarkers(traces);
+  map.addMarkers(pointTraces);
+  
   strokeWeight(strokoo);
-  
-  //you might need to add this in again
-  //if(selectOneFile>-1)  background(255);
-  //else background(255);
-  
-  map.addMarkers(traces);
-  
   background(255);
   noStroke();
   colorMode(HSB);
   
   lonLims = bufferVals(lonLims, 0.2);
   latLims = bufferVals(latLims, 0.2);
-  println(latLims);
-  println(lonLims);
+  println(latLims + "\n" + lonLims);
   
   Location centrePoint = 
     new Location(0.5 * (latLims.x + latLims.y), 0.5 * (lonLims.x + lonLims.y));
@@ -194,19 +195,35 @@ void setup()
 //  size(w, 800);
   surface.setResizable(true);
   surface.setSize(800, 800);
+  timeIndex = startMam;
 }
 
 void draw()
 {  
+    background(0);
+    if(! paused){
+            
+      
+      for(int i = 0; i < pointTraces.size(); i++){
+        ((AnimatedPointMarker)pointTraces.get(i)).setToTime(timeIndex);
+        /*List <Location> myPointTraces = traceRecords.get(i);
+        if(myPointTraces.size() >= timeIndex)
+              pointTraces.get(i).setLocation(myPointTraces.get(timeIndex));
+              */
+      }
+      timeIndex += mamChange; 
+    }
 //  println(traces.size());
    map.draw();
  // currentMap.draw();  
 }
 
+
 void keyPressed() {
-    if (key == '1') {
-        currentMap = map;
-    } else if (key == '2') {
-        currentMap = map2;
+    if (key == ' ') {
+        paused = !paused;
+    }
+    if( key== 'r') {
+        mamChange *= -1;
     }
 }

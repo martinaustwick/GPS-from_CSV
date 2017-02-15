@@ -1,3 +1,8 @@
+color[] palette = {color(166,206,227, 100), color(31,120,180, 100), 
+  color(178,223,138, 100), color(51,160,44, 100), color(251,154,153, 100), 
+  color(227,26,28, 100), color(253,191,111, 100), color(255,127,0, 100), 
+  color(202,178,214)};
+
 PVector bufferVals(PVector maxmin, float percentageBuffer)
 {
     float meanVec = 0.5*(maxmin.y + maxmin.x);
@@ -37,59 +42,6 @@ boolean drift(float a, float b)
     else return false;
 }
 
-int timeAfter(int mamTimeIn, float [] mamTimes, int fileNumber)
-{
-    // get the index of the time index AFTER the current time
-    int postIndex = -1;
-    for(int i = currentTimeIndex.get(fileNumber); i<mamTimes.length; i++)
-    {
-        //if(mamTimeIn>mamTimes[i-1]){
-          if((mamTimeIn<mamTimes[i]))
-          {
-              if(mamTimeIn>=mamTimes[i-1]) 
-              {
-                  //println(mamTimeIn + " " + mamTimes[i-1] + " " + mamTimes[i] + " " +i);
-                  //&&(mamTimeIn>mamTimes[i-1])
-                  postIndex = i;
-                  i = mamTimes.length;
-              }
-              //if(postIndex>-1) println(postIndex);
-          }
-        //}
-    }
-    //this is some hackery
-    //if(mamTimeIn>mamTimes[mamTimes.length-1])
-    //{
-    //    postIndex = mamTimes.length;
-    //}
-    return postIndex;
-}
-
-ArrayList<Integer> timesAfter(int mamTimeIn, float [] mamTimes, int fileNumber)
-{
-    // get the index of the time index AFTER the current time
-    ArrayList<Integer> postIndices = new ArrayList<Integer>();
-    for(int i = 1; i<mamTimes.length; i++)
-    {
-        //if(mamTimeIn>mamTimes[i-1]){
-          if((mamTimeIn<mamTimes[i]))
-          {
-              if(mamTimeIn>=mamTimes[i-1]) 
-              {
-                  postIndices.add(i);
-              }
-              //if(postIndex>-1) println(postIndex);
-          }
-        //}
-    }
-    //this is some hackery
-    //if(mamTimeIn>mamTimes[mamTimes.length-1])
-    //{
-    //    postIndex = mamTimes.length;
-    //}
-    return postIndices;
-}
-
 void elClocko()
 {
     fill(255);
@@ -112,4 +64,10 @@ void drawLogos()
 {
 //    image(casa, 10, height-casa.height-10);
 //    image(ftc, 30+casa.width, height-ftc.height-10);
+}
+
+// return the header of this object
+PositionRecord getHead(PositionRecord pr){
+   if(pr.prev != null) return getHead(pr.prev);
+   else return pr;
 }
