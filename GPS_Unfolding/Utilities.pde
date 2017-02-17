@@ -1,6 +1,6 @@
-color[] palette = {color(166,206,227, 100), color(31,120,180, 100), 
-  color(178,223,138, 100), color(51,160,44, 100), color(251,154,153, 100), 
-  color(227,26,28, 100), color(253,191,111, 100), color(255,127,0, 100), 
+color[] palette = {color(166,206,227), color(31,120,180), 
+  color(178,223,138), color(51,160,44), color(251,154,153), 
+  color(227,26,28), color(253,191,111), color(255,127,0), 
   color(202,178,214)};
 
 PVector bufferVals(PVector maxmin, float percentageBuffer)
@@ -48,7 +48,7 @@ void elClocko()
     stroke(0);
     rect(0,0,80,50);
     fill(0);
-    String textor = str(mamTime/3600) + ":" + nf((mamTime/60)%60,2,0) + ":" + nf(mamTime%60,2,0);
+    String textor = str(timeIndex/3600) + ":" + nf((timeIndex/60)%60,2,0) + ":" + nf(timeIndex%60,2,0);
     text(textor, 20,30);
 }
 

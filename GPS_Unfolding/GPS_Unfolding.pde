@@ -31,11 +31,11 @@ int maxFile = 13;
 PVector latLims = new PVector(51.5,51.6);
 PVector lonLims = new PVector(-0.3,0.05);
 
-float driftLimit = 0.01;
+float driftLimit = 0.001;
 
 // time parameters
-int startMam = 6*3600+(40*60);
-int mamChange = 5;
+int startMam = 8*3600;
+int mamChange = 2;
 
 // graphical parameters
 float trackAlpha = 50;
@@ -49,6 +49,7 @@ boolean findLimits = true;
 List<List<Location>> traceRecords = new ArrayList<List<Location>> ();
 List<Marker> traces = new ArrayList<Marker>();
 List<Marker> pointTraces = new ArrayList<Marker>();
+List<Marker> tails = new ArrayList<Marker>();
 
 //
 // the physical world
@@ -75,7 +76,7 @@ void setup()
   
   loadLogos();
 
-  String tilesStr = "jdbc:sqlite:" + sketchPath("./data/tiles/FTC3.mbtiles");
+  String tilesStr = "jdbc:sqlite:" + sketchPath("./data/tiles/LondonDemo.mbtiles");
   
   // set up the UnfoldingMap to hold the data
   
@@ -85,11 +86,6 @@ void setup()
   map.zoomToLevel(14);
   map.setZoomRange(12, 17); // prevent zooming too far out
   MapUtils.createDefaultEventDispatcher(this, map);
-  
-  // set up a holder for the lines we define here
-  List<Marker> traces = new ArrayList<Marker>();
-  List<PositionRecord> myRoutes = new ArrayList<PositionRecord>();
-  
   
   if(findLimits)
   {
@@ -124,6 +120,7 @@ void setup()
         if (ew[i].equals("W")) lons[i] *=-1;
         if (ns[i].equals("S")) lats[i] *=-1;
         
+        // adjust the map to the limits of the area
         if(findLimits)
         {
             if(abs(lons[i]-lons[i-1])<driftLimit)
@@ -153,46 +150,31 @@ void setup()
 
       // 
       PositionRecord head = getHead(prevRecord);
-      AnimatedPointMarker myRoute = new AnimatedPointMarker(head);
+      AnimatedPointMarker myRoute = new AnimatedPointMarker(head, "#" + f);
       
-//      SimpleLinesMarker myTrace = new SimpleLinesMarker(traceLocations);
-//      SimplePointMarker myPoint = new SimplePointMarker(head.position);//traceLocations.get(0));
-      myRoute.setColor(color(0,255,255,200));
+      myRoute.setColor(palette[int(random(palette.length))]);//color(0,255,255,200));
       myRoute.setStrokeWeight((int)strokoo*2);
       pointTraces.add(myRoute);
-/*      traceRecords.add(traceLocations);
-      myTrace.setStrokeWeight((int)strokoo);
-      myTrace.setColor(color(255,0,0,75));
-      myTrace.setStrokeColor(color(255,0,0,100));
-//      myTrace.setColor(palette[int(random(palette.length))]);
-      traces.add(myTrace);
-  */    
+      tails.add(myRoute.getTail());
   }
   
-  
-//  map.addMarkers(traces);
   map.addMarkers(pointTraces);
+  map.addMarkers(tails);
   
   strokeWeight(strokoo);
   background(255);
   noStroke();
   colorMode(HSB);
   
+  // defining the limits of the window
   lonLims = bufferVals(lonLims, 0.2);
   latLims = bufferVals(latLims, 0.2);
   println(latLims + "\n" + lonLims);
   
+  // set up the map for visualisation
   Location centrePoint = 
     new Location(0.5 * (latLims.x + latLims.y), 0.5 * (lonLims.x + lonLims.y));
-  map.panTo(centrePoint);
-  
-  //dynamic tweaking of aspect; assume a fixed height for this
-  float midLat = 0.5*(latLims.y+latLims.x);
-  float dy = (latLims.y-latLims.x);
-  float dx = (lonLims.y-lonLims.x);
-  int w = int(800*cos(radians(midLat))*dx/dy);
-  
-//  size(w, 800);
+  map.panTo(centrePoint);  
   surface.setResizable(true);
   surface.setSize(800, 800);
   timeIndex = startMam;
@@ -202,20 +184,14 @@ void draw()
 {  
     background(0);
     if(! paused){
-            
       
       for(int i = 0; i < pointTraces.size(); i++){
         ((AnimatedPointMarker)pointTraces.get(i)).setToTime(timeIndex);
-        /*List <Location> myPointTraces = traceRecords.get(i);
-        if(myPointTraces.size() >= timeIndex)
-              pointTraces.get(i).setLocation(myPointTraces.get(timeIndex));
-              */
       }
       timeIndex += mamChange; 
     }
-//  println(traces.size());
    map.draw();
- // currentMap.draw();  
+   elClocko();
 }
 
 
@@ -223,7 +199,7 @@ void keyPressed() {
     if (key == ' ') {
         paused = !paused;
     }
-    if( key== 'r') {
+    if( key== 'r') { // reverse the flow of time!
         mamChange *= -1;
     }
 }
