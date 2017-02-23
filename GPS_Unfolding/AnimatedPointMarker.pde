@@ -3,6 +3,9 @@ class AnimatedPointMarker extends SimplePointMarker {
   String myName;
   PositionRecord head;
   SimpleLinesMarker myTail;
+  color myColor;
+
+  boolean square = false;
 
   PFont font;
   float fontSize = 12;
@@ -13,7 +16,7 @@ class AnimatedPointMarker extends SimplePointMarker {
       head = start;
       myTail = new SimpleLinesMarker();
       myTail.setStrokeWeight((int)strokoo);
-      myTail.setColor(color(0, 0, 0, 20));//palette[int(random(palette.length))]);//
+      myTail.setColor(color(255, 0, 0, 20));//palette[int(random(palette.length))]);//
       setColor(palette[int(random(palette.length))]);
       setStrokeColor(palette[int(random(palette.length))]);
       myName = name;
@@ -50,6 +53,10 @@ class AnimatedPointMarker extends SimplePointMarker {
       // Otherwise, it either hasn't started happening or has finished happening!
   }
 
+  void setColor(color c){
+    myColor = c; 
+  }
+
   SimpleLinesMarker getTail() { 
       return myTail;
   }
@@ -69,10 +76,20 @@ class AnimatedPointMarker extends SimplePointMarker {
       } else {
            pg.stroke(this.strokeColor);
       }
-      pg.ellipse((int) x, (int) y, radius, radius);
+      
+      pg.fill(myColor);
+      // fill in the shape responsibly
+      if(square) {
+        pg.rect(x, y, radius, radius);
+      }
+      else {
+        pg.ellipse((int) x, (int) y, radius, radius);
+      }
+        
       if (font != null) {
            pg.textFont(font);
       }
+      
       pg.fill(color(0, 0, 0, 255));
       pg.text(myName, Math.round(x + space * 0.75f + strokeWeight / 2), 
           Math.round(y + strokeWeight / 2 - space * 0.75f));
