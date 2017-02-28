@@ -34,8 +34,8 @@ PVector lonLims = new PVector(-0.3, 0.05);
 float driftLimit = 0.001;
 
 // time parameters
-int startMam = 9*3600 + 60 * 20;
-int mamChange = 2;
+int startMam = 6*3600;// + 60 * 20;
+int mamChange = 10;
 
 // graphical parameters
 float trackAlpha = 50;
