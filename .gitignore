@@ -1,6 +1,5 @@
 
 *.csv
-
+GPS_Unfolding/data/tiles/gis.osm_*
 GPS_2_3/vidoImages/AllTrac.jpg
-
 *.jpg

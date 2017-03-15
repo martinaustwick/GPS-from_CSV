@@ -2,7 +2,7 @@ int count = 0;
 ArrayList<float []>allLats, allLons, mams;
 ArrayList<Integer> currentTimeIndex;
 
-String baseString = "BL";
+String baseString = "";
 
 
 int startMam = 6*3600+(40*60);
@@ -125,6 +125,7 @@ void setup()
   float dx = (lonLims.y-lonLims.x);
   int w = int(800*cos(radians(midLat))*dx/dy);
   
+//  size(w, 800);
   surface.setResizable(true);
   surface.setSize(w, 800);
 }
@@ -345,14 +346,14 @@ void elClocko()
 
 void loadLogos()
 {
-    casa = loadImage("logos/casa_logo.jpg");
-    casa.resize(90,120);
+//    casa = loadImage("logos/casa_logo.jpg");
+//    casa.resize(90,120);
     ftc = loadImage("logos/ftc.png");
     ftc.resize(200,120);
 }
 
 void drawLogos()
 {
-    image(casa, 10, height-casa.height-10);
-    image(ftc, 30+casa.width, height-ftc.height-10);
+//    image(casa, 10, height-casa.height-10);
+//    image(ftc, 30+casa.width, height-ftc.height-10);
 }
