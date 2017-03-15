@@ -203,6 +203,8 @@ List <BlinkingPointMarker> readInFile(String filename, String name, color myColo
     bpm.setStrokeColor(myColor);
     bpm.setHighlightStrokeColor(finishedColor);
     bpm.setStrokeWeight((int)strokoo);
+    if(mode.equals("Driving"))
+      bpm.setHighlightStrokeColor(color(0,255,0,50));
 
     results.add(bpm);
 

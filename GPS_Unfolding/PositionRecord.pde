@@ -1,8 +1,10 @@
+// Object to hold a point in spacetime, with references to the previous
+// and subsequent spacetime points
 class PositionRecord {
  
   PositionRecord prev, next;
   int time;
-  Location position;
+  Location position; // could be generalised to a geometry
 
   PositionRecord(int t, Location pos){
     time = t;

@@ -20,6 +20,11 @@ import de.fhpotsdam.unfolding.mapdisplay.AbstractMapDisplay;
 import de.fhpotsdam.unfolding.mapdisplay.MapDisplayFactory;
 import de.fhpotsdam.unfolding.tiles.MBTilesLoaderUtils;
 
+// controlling the visualisation
+boolean paused = false;
+boolean enable_heatmap = false;
+boolean enable_agents = true;
+
 //
 // identifying the data to utilise
 //
@@ -30,34 +35,33 @@ int maxFile = 30;
 // world parameters
 PVector latLims = new PVector(51.5, 51.6);
 PVector lonLims = new PVector(-0.3, 0.05);
-
+int minTime = 0, maxTime = 24*3600;
 float driftLimit = 0.001;
 
 // time parameters
-int startMam = 6*3600;// + 60 * 20;
-int mamChange = 10;
+int startMam = 6*3600; // CHANGE THIS to change the start time!
+int mamChange = 10; // CHANGE THIS to make time run faster or slower
+int timeIndex;
 
 // graphical parameters
 float trackAlpha = 50;
 float strokoo = 5;
-boolean paused = false;
 boolean findLimits = true;
 
-//
-// storage for data
+/*// storage for data
 //
 List<Marker> driverTraces = new ArrayList<Marker>();
 List<Marker> vehicleTraces = new ArrayList<Marker>();
 List<Marker> tails = new ArrayList<Marker>();
-
+*/
 //
 // the physical world
 //
 UnfoldingMap map;
+MarkerManager mm_agents;
+MarkerManager mm_heatmap;
 
 
-int mamTime;
-int timeIndex;
 
 
 // images
@@ -71,17 +75,18 @@ void setup()
   size(1200, 800, P3D);
   smooth();
   frameRate(90);
-  mamTime = startMam;
 
   loadLogos();
 
-  String tilesStr = "jdbc:sqlite:" + sketchPath("./data/tiles/LondonDemo_noRed.mbtiles");
+  String tilesStr = "jdbc:sqlite:" + sketchPath("./data/tiles/LondonSmokeAndStars2.mbtiles");
 
   // set up the UnfoldingMap to hold the data
-
   map = new UnfoldingMap(this, new MBTilesMapProvider(tilesStr));
-  //new StamenMapProvider.TonerBackground()); //(alternate tilings)
-  //new StamenMapProvider.WaterColor());
+            //new StamenMapProvider.WaterColor());
+  mm_agents = new MarkerManager<Marker>();
+  mm_heatmap = new MarkerManager<Marker>();
+  
+  // set
   map.zoomToLevel(14);
   map.setZoomRange(12, 17); // prevent zooming too far out
   MapUtils.createDefaultEventDispatcher(this, map);
@@ -90,40 +95,37 @@ void setup()
   {
     latLims = new PVector(90, -90);
     lonLims = new PVector(180, -180);
+    minTime = Integer.MAX_VALUE;
+    maxTime = -1;
   }
 
+  // go through the files and read in the driver/vehicle pairs
   for (int f = 0; f<=maxFile; f++)
   {      
 
     // first process the driver
-
     String filename = baseString + str(f) + "-D.csv";
-    AnimatedPointMarker driver = readInFile(filename, "#" + f);
+    AnimatedPointMarker driver = readInFile(filename, "#" + f, true);
     color myColor = palette[int(random(palette.length))];
     driver.setColor(myColor);
     driver.setStrokeWeight(2);
     driver.setStrokeColor(color(0,0,0));
-    driverTraces.add(driver);
-    tails.add(driver.getTail());
+    mm_agents.addMarker(driver);
+    mm_heatmap.addMarker(driver.getTail());
     
     // next the vehicle
     filename = baseString + str(f) + "-V.csv";
-    AnimatedPointMarker vehicle = readInFile(filename, "");
+    AnimatedPointMarker vehicle = readInFile(filename, "", false);
     vehicle.square = true;
     vehicle.setColor(myColor);
     vehicle.setStrokeColor(color(0,0,0));
     vehicle.setStrokeWeight(0);
-    vehicleTraces.add(vehicle);
+    mm_agents.addMarker(vehicle);
   }
 
-  map.addMarkers(vehicleTraces);
-  map.addMarkers(driverTraces);
-  map.addMarkers(tails);
-
-  strokeWeight(strokoo);
-  background(255);
-  noStroke();
-  colorMode(HSB);
+  // add the MarkerManagers to the map itself
+  map.addMarkerManager(mm_agents);
+  map.addMarkerManager(mm_heatmap);
 
   // defining the limits of the window
   lonLims = bufferVals(lonLims, 0.2);
@@ -131,15 +133,24 @@ void setup()
   println(latLims + "\n" + lonLims);
 
   // set up the map for visualisation
-  Location centrePoint = 
-    new Location(0.5 * (latLims.x + latLims.y), 0.5 * (lonLims.x + lonLims.y));
-  map.panTo(centrePoint);  
+  Location centrePoint = new Location(0.5 * (latLims.x + latLims.y), 
+      0.5 * (lonLims.x + lonLims.y));
+  map.panTo(centrePoint);
+  
+  // final settings on the environment
+  strokeWeight(strokoo);
+  background(255);
+  noStroke();
+  colorMode(HSB);
+
   surface.setResizable(true);
   surface.setSize(1200, 800);
-  timeIndex = startMam;
+  timeIndex = min(startMam, minTime);
 }
 
-AnimatedPointMarker readInFile(String filename, String name) {
+// read in a CSV tracking movement patterns and store its spatiotemporal path
+// in a linked list of PositionRecords
+AnimatedPointMarker readInFile(String filename, String name, boolean traces) {
 
   // open the Driver file and read it into a table
   Table route = loadTable(filename, "header");
@@ -163,7 +174,11 @@ AnimatedPointMarker readInFile(String filename, String name) {
     if (ew[i].equals("W") && lons[i] > 0) lons[i] *=-1;
     if (ns[i].equals("S") && lats[i] > 0) lats[i] *=-1;
 
-    // adjust the map to the limits of the area
+    // extract time information
+    String [] timeLine = split(time[i], ":");
+    int myTime = 3600*int(timeLine[0]) + 60*int(timeLine[1]) + int(timeLine[2]);
+
+    // adjust the map to the limits of the area and time
     if (findLimits)
     {
       if (abs(lons[i]-lons[i-1])<driftLimit)
@@ -176,24 +191,20 @@ AnimatedPointMarker readInFile(String filename, String name) {
         if (lats[i]<latLims.x) latLims.x=lats[i];
         if (lats[i]>latLims.y) latLims.y=lats[i];
       }
+      
+      if(myTime > maxTime) maxTime = myTime;
+      if(myTime < minTime) minTime = myTime;
     }
-
-    // extract time information
-    String [] timeLine = split(time[i], ":");
-    int myTime = 3600*int(timeLine[0]) + 60*int(timeLine[1]) + int(timeLine[2]);
 
     // save the record as a PositionRecord
     PositionRecord pr = new PositionRecord( myTime, new Location(lats[i], lons[i]));
     pr.setPrev(prevRecord);
     prevRecord = pr;
-
-    // save the record as a LinesMarker object!
-    //traceLocations.add(new Location(lats[i], lons[i]));
   }
 
-  // 
+  // Create the marker
   PositionRecord head = getHead(prevRecord);
-  return new AnimatedPointMarker(head, name);
+  return new AnimatedPointMarker(head, name, traces);
 }
 
 void draw()
@@ -201,17 +212,20 @@ void draw()
   background(0);
   if (! paused) {
 
-    for (int i = 0; i < driverTraces.size(); i++) {
-      ((AnimatedPointMarker)driverTraces.get(i)).setToTime(timeIndex);
-      ((AnimatedPointMarker)vehicleTraces.get(i)).setToTime(timeIndex);
-    }
-    timeIndex += mamChange;
+    // only proceed if the time is within the bounds
+    if(timeIndex <= maxTime && timeIndex >=minTime)
+      for (Object o: mm_agents.getMarkers())
+        ((AnimatedPointMarker) o).setToTime(timeIndex);
+
+    // update the time index
+    timeIndex += mamChange; // ...but don't exceed the temporal boundaries
+    timeIndex = min(max(timeIndex, minTime), maxTime);
   }
   map.draw();
-  elClocko();
+  elClocko(); // visualise the time
 }
 
-
+// control the visualisation
 void keyPressed() {
   if (key == ' ') {
     paused = !paused;
@@ -219,7 +233,17 @@ void keyPressed() {
   if ( key== 'r') { // reverse the flow of time!
     mamChange *= -1;
   }
-  if ( key == 'q') {
+  if ( key == 'q') { // exit the visualisation
     exit();
+  }
+  if ( key =='h') { // flip the visibility of the heatmap
+    enable_heatmap = !enable_heatmap;
+    if(enable_heatmap) mm_heatmap.enableDrawing();
+    else mm_heatmap.disableDrawing();
+  }
+  if ( key == 'a'){ // flip the visibility of the agents
+    enable_agents = !enable_agents;
+    if(enable_agents) mm_agents.enableDrawing();
+    else mm_agents.disableDrawing();
   }
 }
