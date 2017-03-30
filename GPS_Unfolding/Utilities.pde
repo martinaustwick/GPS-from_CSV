@@ -1,3 +1,175 @@
+// READ IN THE DATA
+
+// read in a CSV tracking movement patterns and store its spatiotemporal path
+// in a linked list of PositionRecords
+AnimatedPointMarker readInFile(String filename, String name, boolean traces) {
+
+  // open the Driver file and read it into a table
+  Table route = loadTable(filename, "header");
+
+  // visualise the names of the columns
+  //println((Object[])route.getColumnTitles());
+
+  // extract columns of data from the table
+  float [] lats = route.getFloatColumn("LATITUDE");
+  float [] lons = route.getFloatColumn("LONGITUDE");    
+  String [] ew = route.getStringColumn("E/W");
+  String [] ns = route.getStringColumn("N/S");
+  String [] time = route.getStringColumn("LOCAL TIME");
+
+  PositionRecord prevRecord = null;
+
+  // iterate over the records, clean them accordingly, and store them
+  for (int i=1; i<lons.length; i++)
+  {
+    // adjust for east or west
+    if (ew[i].equals("W") && lons[i] > 0) lons[i] *=-1;
+    if (ns[i].equals("S") && lats[i] > 0) lats[i] *=-1;
+
+    // extract time information
+    String [] timeLine = split(time[i], ":");
+    int myTime = 3600*int(timeLine[0]) + 60*int(timeLine[1]) + int(timeLine[2]);
+
+    // adjust the map to the limits of the area and time
+    if (findLimits)
+    {
+      if (abs(lons[i]-lons[i-1])<driftLimit)
+      {
+        if (lons[i]<lonLims.x) lonLims.x=lons[i];
+        if (lons[i]>lonLims.y) lonLims.y=lons[i];
+      }
+      if (abs(lats[i]-lats[i-1])<driftLimit && lats[i]<89)
+      {
+        if (lats[i]<latLims.x) latLims.x=lats[i];
+        if (lats[i]>latLims.y) latLims.y=lats[i];
+      }
+      
+      if(myTime > maxTime) maxTime = myTime;
+      if(myTime < minTime) minTime = myTime;
+    }
+
+    // save the record as a PositionRecord
+    PositionRecord pr = new PositionRecord( myTime, new Location(lats[i], lons[i]));
+    pr.setPrev(prevRecord);
+    prevRecord = pr;
+  }
+
+  // Create the marker
+  PositionRecord head = getHead(prevRecord);
+  return new AnimatedPointMarker(head, name, traces);
+}
+
+// read in a CSV tracking movement patterns and store its spatiotemporal path
+// in a linked list of PositionRecords
+void readInFilePoints(String filename, color minColor, color maxColor, MarkerManager manager) {
+
+  // open the Driver file and read it into a table
+  Table route = loadTable(filename, "header,csv");
+
+  // visualise the names of the columns
+  //println((Object[])route.getColumnTitles());
+
+  // extract columns of data from the table
+  float [] lats = route.getFloatColumn("lat");//"LATITUDE");
+  float [] lons = route.getFloatColumn("long");//"LONGITUDE");    
+  String [] modes = route.getStringColumn("Mode");
+
+  // iterate over the records, clean them accordingly, and store them
+  for (int i=0; i<lons.length; i++)
+  {
+
+    // adjust the map to the limits of the area
+    if (findLimits)
+    {
+      if (i > 0 && abs(lons[i]-lons[i-1])<driftLimit)
+      {
+        if (lons[i]<lonLims.x) lonLims.x=lons[i];
+        if (lons[i]>lonLims.y) lonLims.y=lons[i];
+      }
+      if (i > 0 && abs(lats[i]-lats[i-1])<driftLimit && lats[i]<89)
+      {
+        if (lats[i]<latLims.x) latLims.x=lats[i];
+        if (lats[i]>latLims.y) latLims.y=lats[i];
+      }      
+    }
+
+    String mode = modes[i];
+    SimplePointMarker sm = new SimplePointMarker(new Location(lats[i], lons[i]));
+    sm.setRadius(mode.equals("W") ? walkingWidth : drivingWidth);
+    sm.setColor(interpolateColor(((float)i)/lons.length, minColor, maxColor));
+    manager.addMarker(sm);
+  }
+
+}
+
+// read in a CSV tracking movement patterns and store its spatiotemporal path
+// in a linked list of PositionRecords
+void readInFileBlinkingPoints(String filename, color openColor, color closedColor, MarkerManager manager) {
+
+  // open the Driver file and read it into a table
+  Table route = loadTable(filename, "header,csv");
+
+  // visualise the names of the columns
+  //println((Object[])route.getColumnTitles());
+
+  // extract columns of data from the table
+  float [] lats = route.getFloatColumn("lat");//"LATITUDE");
+  float [] lons = route.getFloatColumn("long");//"LONGITUDE");    
+  String [] modes = route.getStringColumn("Mode");
+  String [] departures = route.getStringColumn("Leave");
+  String [] arrivals = route.getStringColumn("Arrive");
+
+  int lastTime = 6*3600; // 6am default
+
+  // iterate over the records, clean them accordingly, and store them
+  for (int i=0; i<lons.length; i++)
+  {
+
+    // adjust the map to the limits of the area
+    if (findLimits)
+    {
+      if (i > 0 && abs(lons[i]-lons[i-1])<driftLimit)
+      {
+        if (lons[i]<lonLims.x) lonLims.x=lons[i];
+        if (lons[i]>lonLims.y) lonLims.y=lons[i];
+      }
+      if (i > 0 && abs(lats[i]-lats[i-1])<driftLimit && lats[i]<89)
+      {
+        if (lats[i]<latLims.x) latLims.x=lats[i];
+        if (lats[i]>latLims.y) latLims.y=lats[i];
+      }      
+    }
+
+    String mode = modes[i];
+    
+    int myTime = lastTime;
+    if((departures[i]).length() > 0 && departures[i].contains(":")){
+      println(departures[i]);
+      String [] timeLine = split(departures[i], ":");
+      println(timeLine);
+      myTime = 3600*int(timeLine[0]) + 60*int(timeLine[1]);
+    }
+    else if((arrivals[i]).length() > 0 && arrivals[i].contains(":")){
+      String [] timeLine = split(arrivals[i], ":");
+      myTime = 3600*int(timeLine[0]) + 60*(1 + int(timeLine[1]));
+    }
+    else
+      myTime = myTime + 1;
+    
+    // extract time information
+    
+    PositionRecord myPr = new PositionRecord(myTime, new Location(lats[i], lons[i]));
+    BlinkingPointMarker sm = new BlinkingPointMarker(myPr, "blah");
+  //  sm.setRadius(mode.equals("W") ? walkingWidth : drivingWidth);
+    sm.setColor(interpolateColor(((float)i)/lons.length, openColor, closedColor));
+    manager.addMarker(sm);
+    lastTime = myTime;
+  }
+
+}
+
+// OTHER
+
 color[] palette = {color(166,206,227), color(31,120,180), 
   color(178,223,138), color(51,160,44), color(251,154,153), 
   color(227,26,28), color(253,191,111), color(255,127,0), 
@@ -70,4 +242,15 @@ void drawLogos()
 PositionRecord getHead(PositionRecord pr){
    if(pr.prev != null) return getHead(pr.prev);
    else return pr;
+}
+
+color interpolateColor(float percent, color c1, color c2){
+   float d_r = red(c1) - red(c2);
+   float d_g = green(c1) - green(c2);
+   float d_b = blue(c1) -  blue(c2);
+   float d_a = alpha(c1) - alpha(c2);
+   return color(red(c2) + percent * d_r, 
+   green(c2) + percent * d_g, 
+   blue(c2) + percent * d_b,
+   alpha(c2) + percent * d_a);
 }

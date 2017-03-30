@@ -23,7 +23,7 @@ import de.fhpotsdam.unfolding.tiles.MBTilesLoaderUtils;
 //
 // identifying the data to utilise
 //
-String baseString = "/Users/swise/Projects/FTC/"; // prefix for csv files (numbered 0-n)
+String baseString = "/Users/swise/Projects/FTC/data/"; // prefix for csv files (numbered 0-n)
 int selectOneFile = 0;//-1; // -1 to draw all tracks at once, 0+ to draw each track individually
 int maxFile = 0;//30;
 
@@ -150,19 +150,18 @@ List <BlinkingPointMarker> readInFile(String filename, String name, color myColo
   String [] mode = route.getStringColumn("Mode");
 
   PositionRecord prevRecord = null;
-  List <Integer> colors = new ArrayList <Integer>();
   List<Location> tempPoints = new ArrayList <Location> ();
   String previousMode = mode[1];
 
   // iterate over the records, clean them accordingly, and store them
-  for (int i=1; i<lons.length; i++)
+  for (int i=0; i<lons.length; i++)
   {
     // adjust for east or west
     if (ew[i].equals("W") && lons[i] > 0) lons[i] *=-1;
     if (ns[i].equals("S") && lats[i] > 0) lats[i] *=-1;
 
     // adjust the map to the limits of the area
-    if (findLimits)
+    if (findLimits && i > 0)
     {
       if (abs(lons[i]-lons[i-1])<driftLimit)
       {
@@ -199,7 +198,7 @@ List <BlinkingPointMarker> readInFile(String filename, String name, color myColo
 
 
     // set up the BlinkingPointMarker
-    BlinkingPointMarker bpm = new BlinkingPointMarker(pr, name, myTime);
+    BlinkingPointMarker bpm = new BlinkingPointMarker(pr, "" + i, myTime);
     bpm.setStrokeColor(myColor);
     bpm.setHighlightStrokeColor(finishedColor);
     bpm.setStrokeWeight((int)strokoo);

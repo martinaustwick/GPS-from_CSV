@@ -30,7 +30,7 @@ class AnimatedPointMarker extends SimplePointMarker {
       if(hasTail){
         myTail = new SimpleLinesMarker();
         myTail.setStrokeWeight((int)strokoo);
-        myTail.setColor(color(250, 250, 250, 15));
+        myTail.setColor(color(250, 250,250,10));//250, 250, 70));
       }
   }
 
@@ -112,7 +112,7 @@ class AnimatedPointMarker extends SimplePointMarker {
            pg.textFont(font);
       }
       
-      pg.fill(color(0, 0, 0, 255));
+      pg.fill(color(0, 0, 255));
       pg.text(myName, Math.round(x + space * 0.75f + strokeWeight / 2), 
           Math.round(y + strokeWeight / 2 - space * 0.75f));
 
