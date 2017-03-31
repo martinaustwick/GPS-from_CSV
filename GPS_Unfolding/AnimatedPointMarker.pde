@@ -36,7 +36,7 @@ class AnimatedPointMarker extends SimplePointMarker {
 
   // constructor
   AnimatedPointMarker(PositionRecord start) {
-      this(start, "Blank", false);
+      this(start, "", false);
   }
 
   // move the point marker either forward or backward in time to the specified

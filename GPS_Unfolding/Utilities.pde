@@ -4,9 +4,10 @@
 // in a linked list of PositionRecords
 AnimatedPointMarker readInFile(String filename, String name, boolean traces) {
 
+  Table route;
   // open the Driver file and read it into a table
-  Table route = loadTable(filename, "header");
-
+  try{
+    route = loadTable(filename, "header");
   // visualise the names of the columns
   //println((Object[])route.getColumnTitles());
 
@@ -57,11 +58,15 @@ AnimatedPointMarker readInFile(String filename, String name, boolean traces) {
   // Create the marker
   PositionRecord head = getHead(prevRecord);
   return new AnimatedPointMarker(head, name, traces);
+  } catch (Exception e){
+    return null;    
+  }
+
 }
 
 // read in a CSV tracking movement patterns and store its spatiotemporal path
 // in a linked list of PositionRecords
-void readInFilePoints(String filename, color minColor, color maxColor, MarkerManager manager) {
+void readInFilePoints(String filename, color minColor, color maxColor, MarkerManager manager) throws FileNotFoundException {
 
   // open the Driver file and read it into a table
   Table route = loadTable(filename, "header,csv");
@@ -104,20 +109,20 @@ void readInFilePoints(String filename, color minColor, color maxColor, MarkerMan
 
 // read in a CSV tracking movement patterns and store its spatiotemporal path
 // in a linked list of PositionRecords
-void readInFileBlinkingPoints(String filename, color openColor, color closedColor, MarkerManager manager) {
+void readInFileBlinkingPoints(String filename, color openColor, color closedColor, MarkerManager manager) throws FileNotFoundException {
 
   // open the Driver file and read it into a table
   Table route = loadTable(filename, "header,csv");
 
   // visualise the names of the columns
   //println((Object[])route.getColumnTitles());
-
+  println(filename);
   // extract columns of data from the table
   float [] lats = route.getFloatColumn("lat");//"LATITUDE");
   float [] lons = route.getFloatColumn("long");//"LONGITUDE");    
   String [] modes = route.getStringColumn("Mode");
-  String [] departures = route.getStringColumn("Leave");
-  String [] arrivals = route.getStringColumn("Arrive");
+//  String [] departures = route.getStringColumn("Leave");
+  String [] arrivals = route.getStringColumn("Time");
 
   int lastTime = 6*3600; // 6am default
 
@@ -143,25 +148,22 @@ void readInFileBlinkingPoints(String filename, color openColor, color closedColo
     String mode = modes[i];
     
     int myTime = lastTime;
-    if((departures[i]).length() > 0 && departures[i].contains(":")){
-      println(departures[i]);
-      String [] timeLine = split(departures[i], ":");
-      println(timeLine);
-      myTime = 3600*int(timeLine[0]) + 60*int(timeLine[1]);
-    }
-    else if((arrivals[i]).length() > 0 && arrivals[i].contains(":")){
+    if((arrivals[i]).length() > 0 && arrivals[i].contains(":")){
       String [] timeLine = split(arrivals[i], ":");
-      myTime = 3600*int(timeLine[0]) + 60*(1 + int(timeLine[1]));
-    }
-    else
-      myTime = myTime + 1;
+      myTime = 3600*int(timeLine[0]) + 60*(int(timeLine[1]) -1);
+//      myTime = 3600*int(timeLine[0]) + 60*int(timeLine[1]);
+   }
+   else
+     myTime = myTime + 1;
     
     // extract time information
     
     PositionRecord myPr = new PositionRecord(myTime, new Location(lats[i], lons[i]));
-    BlinkingPointMarker sm = new BlinkingPointMarker(myPr, "blah");
+    BlinkingPointMarker sm = new BlinkingPointMarker(myPr, "");
   //  sm.setRadius(mode.equals("W") ? walkingWidth : drivingWidth);
-    sm.setColor(interpolateColor(((float)i)/lons.length, openColor, closedColor));
+ //   sm.setColor(interpolateColor(((float)i)/lons.length, openColor, closedColor));
+    sm.setStrokeColor(openColor);
+    sm.setColor(closedColor);
     manager.addMarker(sm);
     lastTime = myTime;
   }

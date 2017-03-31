@@ -5,8 +5,8 @@ class BlinkingPointMarker extends SimplePointMarker {
   boolean paused = false;
   int myTime = -1;
   
-  int defaultSize = 3;
-  float shrinkParameter = 50.;
+  int defaultSize = 6;
+  float shrinkParameter = 70.;
   int blinkSpeed = 1200;
 
   boolean square = false;
@@ -17,8 +17,8 @@ class BlinkingPointMarker extends SimplePointMarker {
 
   BlinkingPointMarker(PositionRecord start, String name) {
       super(start.position);
-      setColor(palette[int(random(palette.length))]);
-      setStrokeColor(palette[int(random(palette.length))]);
+  //    setColor(palette[int(random(palette.length))]);
+  //    setStrokeColor(color(0,0,0,50));//palette[int(random(palette.length))]);
       myName = name;
       myTime = start.time;
   }
@@ -36,7 +36,7 @@ class BlinkingPointMarker extends SimplePointMarker {
   }
 
   BlinkingPointMarker(PositionRecord start) {
-      this(start, "Blank");
+      this(start, "");
   }
 
   void setColor(color c){
@@ -55,7 +55,7 @@ class BlinkingPointMarker extends SimplePointMarker {
       pg.strokeWeight(this.strokeWeight);
 
       if (isSelected() || paused) { // it's not blinking
-           pg.fill(this.highlightStrokeColor);
+           pg.fill(myColor);
            radius = defaultSize;
       } else { // it's blinking
            pg.fill(this.strokeColor);

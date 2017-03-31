@@ -5,6 +5,7 @@
  */
 
 import java.util.List;
+import java.io.FileNotFoundException;
 
 import de.fhpotsdam.unfolding.*;
 import de.fhpotsdam.unfolding.core.*;
@@ -28,12 +29,14 @@ boolean enable_agents = true;
 //
 // identifying the data to utilise
 //
-String traceString = "/Users/swise/Projects/FTC/data/TNTcsv_sample/"; // prefix for csv files (numbered 0-n)
-String manifestString = "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/"; // prefix for csv files (numbered 0-n)
+String traceString = "/Users/swise/Projects/FTC/data/GnewtN_251016/GnewtN_"; // prefix for csv files (numbered 0-n)
+String traceStringSuffix = "_251016.csv";
+String manifestString = "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_"; // prefix for csv files (numbered 0-n)
+String manifestStringSuffix = ".csv";
 
-int selectOneFile = 26;//-1; // -1 to draw all tracks at once, 0+ to draw each track individually
-int maxFile = 26;//7;
-int minManifest = 0;
+int selectOneFile = -1;//-1; // -1 to draw all tracks at once, 0+ to draw each track individually
+int maxFile = 13;//7;
+int minManifest = 1;
 int maxManifest = 2;
 
 // world parameters
@@ -43,8 +46,8 @@ int minTime = 0, maxTime = 24*3600;
 float driftLimit = 0.001;
 
 // time parameters
-int startMam = 6*3600; // CHANGE THIS to change the start time!
-int mamChange = 10; // CHANGE THIS to make time run faster or slower
+int startMam = 9*3600; // CHANGE THIS to change the start time!
+int mamChange = 5; // CHANGE THIS to make time run faster or slower
 int timeIndex;
 
 // graphical parameters
@@ -55,12 +58,6 @@ boolean findLimits = true;
 int walkingWidth = 20;//15;
 int drivingWidth = 12;//7;
 
-/*// storage for data
-//
-List<Marker> driverTraces = new ArrayList<Marker>();
-List<Marker> vehicleTraces = new ArrayList<Marker>();
-List<Marker> tails = new ArrayList<Marker>();
-*/
 //
 // the physical world
 //
@@ -89,12 +86,12 @@ void setup()
 
   // set up the UnfoldingMap to hold the data
   map = new UnfoldingMap(this, new MBTilesMapProvider(tilesStr));
-            //new StamenMapProvider.WaterColor());
+  //new StamenMapProvider.WaterColor());
   mm_agents = new MarkerManager<Marker>();
   mm_heatmap = new MarkerManager<Marker>();
   mm_deliveries = new MarkerManager<Marker>();
-  
- // set
+
+  // set
   map.zoomToLevel(14);
   map.setZoomRange(12, 17); // prevent zooming too far out
   MapUtils.createDefaultEventDispatcher(this, map);
@@ -107,45 +104,60 @@ void setup()
     maxTime = -1;
   }
 
- // go through the files and read in the driver/vehicle pairs
-  for (int f = max(0,selectOneFile); f<=maxFile; f++)
+  // go through the files and read in the driver/vehicle pairs
+  for (int f = max(1, selectOneFile); f<=maxFile; f++)
   {      
 
+
     // first process the driver
-    String filename = traceString + str(f) + "-D.csv";
+    String filename = traceString + str(f) + "D" + traceStringSuffix;
+    color myColor = palette[int(random(palette.length))];
+  
+  
+    if(f > 0 ){
+
     AnimatedPointMarker driver = readInFile(filename, "" + f, true);
-    color myColor = palette[int(random(palette.length))];
-    driver.setColor(myColor);
-    driver.setStrokeWeight(2);
-    driver.setStrokeColor(color(0,0,0));
-    mm_agents.addMarker(driver);
-    mm_heatmap.addMarker(driver.getTail());
-    
+    if (driver != null) {
+      driver.setColor(myColor);
+      driver.setStrokeWeight(2);
+      driver.setStrokeColor(color(0, 0, 0));
+      mm_agents.addMarker(driver);
+      mm_heatmap.addMarker(driver.getTail());
+    }
+
     // next the vehicle
-    filename = traceString + str(f) + "-V.csv";
+
+    filename = traceString + str(f) + "V" + traceStringSuffix;
     AnimatedPointMarker vehicle = readInFile(filename, "", false);
-    vehicle.square = true;
-    vehicle.setColor(myColor);
-    vehicle.setStrokeColor(color(0,0,0));
-    vehicle.setStrokeWeight(0);
-    mm_agents.addMarker(vehicle);
+    if (vehicle != null) {
+      vehicle.square = true;
+      vehicle.setColor(myColor);
+      vehicle.setStrokeColor(color(0, 0, 0));
+      vehicle.setStrokeWeight(0);
+      mm_agents.addMarker(vehicle);
+    }
+    }
+    // finally, an associated manifest
 
-}
-
-  for(int f = minManifest; f <= maxManifest; f++){
-        // finally, an associated manifest
-    String filename = manifestString + str(f) + ".csv";
+    if(f >= minManifest && f <= maxManifest){
+    filename = manifestString + str(f) + "_GnewtN.csv";
     // taken from https://processing.org/discourse/beta/num_1261125421.html
-    color myColor = palette[int(random(palette.length))];
+    
     color newColor = (myColor & 0xffffff) | (100 << 24); 
-    readInFileBlinkingPoints(filename, newColor, color(255,255,255,100), mm_deliveries);
+    try {
+      readInFileBlinkingPoints(filename, newColor, color(255, 255, 255, 100), mm_deliveries);
+    } 
+    catch (FileNotFoundException e) {
+    }
 
+    }
+    
   }
 
   // add the MarkerManagers to the map itself
   map.addMarkerManager(mm_agents);
-  map.addMarkerManager(mm_heatmap);
   map.addMarkerManager(mm_deliveries);
+  map.addMarkerManager(mm_heatmap);
 
   // defining the limits of the window
   lonLims = bufferVals(lonLims, 0.2);
@@ -154,9 +166,9 @@ void setup()
 
   // set up the map for visualisation
   Location centrePoint = new Location(0.5 * (latLims.x + latLims.y), 
-      0.5 * (lonLims.x + lonLims.y));
+    0.5 * (lonLims.x + lonLims.y));
   map.panTo(centrePoint);
-  
+
   // final settings on the environment
   strokeWeight(strokoo);
   background(255);
@@ -165,7 +177,10 @@ void setup()
 
   surface.setResizable(true);
   surface.setSize(1200, 800);
-  timeIndex = min(startMam, minTime);
+  if(findLimits)
+    timeIndex = max(startMam, minTime);
+  else
+    timeIndex = startMam;
 }
 
 
@@ -182,8 +197,8 @@ void draw()
     }
 
     // only proceed if the time is within the bounds
-    if(timeIndex <= maxTime && timeIndex >=minTime)
-      for (Object o: mm_agents.getMarkers())
+    if (timeIndex <= maxTime && timeIndex >=minTime)
+      for (Object o : mm_agents.getMarkers())
         ((AnimatedPointMarker) o).setToTime(timeIndex);
 
     // update the time index
@@ -207,12 +222,12 @@ void keyPressed() {
   }
   if ( key =='h') { // flip the visibility of the heatmap
     enable_heatmap = !enable_heatmap;
-    if(enable_heatmap) mm_heatmap.enableDrawing();
+    if (enable_heatmap) mm_heatmap.enableDrawing();
     else mm_heatmap.disableDrawing();
   }
-  if ( key == 'a'){ // flip the visibility of the agents
+  if ( key == 'a') { // flip the visibility of the agents
     enable_agents = !enable_agents;
-    if(enable_agents) mm_agents.enableDrawing();
+    if (enable_agents) mm_agents.enableDrawing();
     else mm_agents.disableDrawing();
   }
 }
