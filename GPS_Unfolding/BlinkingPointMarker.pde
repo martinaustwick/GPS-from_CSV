@@ -7,7 +7,7 @@ class BlinkingPointMarker extends SimplePointMarker {
   
   int defaultSize = 6;
   float shrinkParameter = 70.;
-  int blinkSpeed = 1200;
+  int blinkSpeed = 2400;
 
   boolean square = false;
 

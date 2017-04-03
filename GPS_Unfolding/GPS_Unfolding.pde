@@ -29,13 +29,8 @@ boolean enable_agents = true;
 //
 // identifying the data to utilise
 //
-String traceString = "/Users/swise/Projects/FTC/data/GnewtN_251016/GnewtN_"; // prefix for csv files (numbered 0-n)
-String traceStringSuffix = "_251016.csv";
-String manifestString = "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_"; // prefix for csv files (numbered 0-n)
-String manifestStringSuffix = ".csv";
-
 int selectOneFile = -1;//-1; // -1 to draw all tracks at once, 0+ to draw each track individually
-int maxFile = 13;//7;
+int maxFile = 9;//7;
 int minManifest = 1;
 int maxManifest = 2;
 
@@ -82,7 +77,8 @@ void setup()
 
   loadLogos();
 
-  String tilesStr = "jdbc:sqlite:" + sketchPath("./data/tiles/LondonSmokeAndStars3.mbtiles");//LondonDemo_noRed.mbtiles");
+  String tilesStr = "jdbc:sqlite:" + sketchPath(
+    "./data/tiles/LondonSmokeAndStars3.mbtiles");//LondonDemo_noRed.mbtiles");
 
   // set up the UnfoldingMap to hold the data
   map = new UnfoldingMap(this, new MBTilesMapProvider(tilesStr));
@@ -104,66 +100,18 @@ void setup()
     maxTime = -1;
   }
 
-  // go through the files and read in the driver/vehicle pairs
-  for (int f = max(1, selectOneFile); f<=maxFile; f++)
-  {      
+  readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_261016.csv", 
+    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv");
+  readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_251016.csv", 
+    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv");
+  readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_271016.csv", 
+    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv");
 
-
-    // first process the driver
-    String filename = traceString + str(f) + "D" + traceStringSuffix;
-    color myColor = palette[int(random(palette.length))];
-  
-  
-    if(f > 0 ){
-
-    AnimatedPointMarker driver = readInFile(filename, "" + f, true);
-    if (driver != null) {
-      driver.setColor(myColor);
-      driver.setStrokeWeight(2);
-      driver.setStrokeColor(color(0, 0, 0));
-      mm_agents.addMarker(driver);
-      mm_heatmap.addMarker(driver.getTail());
-    }
-
-    // next the vehicle
-
-    filename = traceString + str(f) + "V" + traceStringSuffix;
-    AnimatedPointMarker vehicle = readInFile(filename, "", false);
-    if (vehicle != null) {
-      vehicle.square = true;
-      vehicle.setColor(myColor);
-      vehicle.setStrokeColor(color(0, 0, 0));
-      vehicle.setStrokeWeight(0);
-      mm_agents.addMarker(vehicle);
-    }
-    }
-    // finally, an associated manifest
-
-    if(f >= minManifest && f <= maxManifest){
-    filename = manifestString + str(f) + "_GnewtN.csv";
-    // taken from https://processing.org/discourse/beta/num_1261125421.html
-    
-    color newColor = (myColor & 0xffffff) | (100 << 24); 
-    try {
-      readInFileBlinkingPoints(filename, newColor, color(255, 255, 255, 100), mm_deliveries);
-    } 
-    catch (FileNotFoundException e) {
-    }
-
-    }
-    
-  }
-
-  // add the MarkerManagers to the map itself
-  map.addMarkerManager(mm_agents);
-  map.addMarkerManager(mm_deliveries);
-  map.addMarkerManager(mm_heatmap);
-
-  // defining the limits of the window
-  lonLims = bufferVals(lonLims, 0.2);
-  latLims = bufferVals(latLims, 0.2);
-  println(latLims + "\n" + lonLims);
-
+/*  readInDir("/Users/swise/Projects/FTC/data/GnewtN_251016/GnewtN_", "_251016.csv", 
+    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtN.csv");
+  readInDir("/Users/swise/Projects/FTC/data/GnewtS_251016/GnewtS_", "_251016.csv", 
+    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtS.csv");
+*/
   // set up the map for visualisation
   Location centrePoint = new Location(0.5 * (latLims.x + latLims.y), 
     0.5 * (lonLims.x + lonLims.y));
@@ -177,13 +125,71 @@ void setup()
 
   surface.setResizable(true);
   surface.setSize(1200, 800);
-  if(findLimits)
+  if (findLimits)
     timeIndex = max(startMam, minTime);
   else
     timeIndex = startMam;
 }
 
+void readInDir(String dirTrace, String dirTraceSuffix, 
+  String dirManifest, String dirManifestSuffix) {
+  // go through the files and read in the driver/vehicle pairs
+  for (int f = max(1, selectOneFile); f<=maxFile; f++)
+  {      
 
+
+    // first process the driver
+    String filename = dirTrace + str(f) + "D" + dirTraceSuffix;
+    color myColor = palette[int(random(palette.length))];
+
+    if (f > 0 ) {
+
+      AnimatedPointMarker driver = readInFile(filename, "" + f, true);
+      if (driver != null) {
+        driver.setColor(myColor);
+        driver.setStrokeWeight(2);
+        driver.setStrokeColor(color(0, 0, 0));
+        mm_agents.addMarker(driver);
+        mm_heatmap.addMarker(driver.getTail());
+      }
+
+      // next the vehicle
+
+      filename = dirTrace + str(f) + "V" + dirTraceSuffix;
+      AnimatedPointMarker vehicle = readInFile(filename, "", false);
+      if (vehicle != null) {
+        vehicle.square = true;
+        vehicle.setColor(myColor);
+        vehicle.setStrokeColor(color(0, 0, 0));
+        vehicle.setStrokeWeight(0);
+        mm_agents.addMarker(vehicle);
+      }
+    }
+    // finally, an associated manifest
+
+    if (f >= minManifest && f <= maxManifest) {
+      filename = dirManifest + str(f) + dirManifestSuffix;
+      // taken from https://processing.org/discourse/beta/num_1261125421.html
+
+      color newColor = (myColor & 0xffffff) | (100 << 24); 
+      try {
+        readInFileBlinkingPoints(filename, newColor, color(255, 255, 255, 100), mm_deliveries);
+      } 
+      catch (FileNotFoundException e) {
+      }
+    }
+  }
+
+  // add the MarkerManagers to the map itself
+  map.addMarkerManager(mm_agents);
+  map.addMarkerManager(mm_deliveries);
+  map.addMarkerManager(mm_heatmap);
+
+  // defining the limits of the window
+  lonLims = bufferVals(lonLims, 0.2);
+  latLims = bufferVals(latLims, 0.2);
+  println(latLims + "\n" + lonLims);
+}
 
 void draw()
 {  

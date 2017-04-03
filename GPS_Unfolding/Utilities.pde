@@ -17,7 +17,8 @@ AnimatedPointMarker readInFile(String filename, String name, boolean traces) {
   String [] ew = route.getStringColumn("E/W");
   String [] ns = route.getStringColumn("N/S");
   String [] time = route.getStringColumn("LOCAL TIME");
-
+//  String [] time = route.getStringColumn("MODIFIED TIME");
+   
   PositionRecord prevRecord = null;
 
   // iterate over the records, clean them accordingly, and store them
@@ -29,7 +30,7 @@ AnimatedPointMarker readInFile(String filename, String name, boolean traces) {
 
     // extract time information
     String [] timeLine = split(time[i], ":");
-    int myTime = 3600*int(timeLine[0]) + 60*int(timeLine[1]) + int(timeLine[2]);
+    int myTime = 3600*int(timeLine[0]) + 60*int(timeLine[1]) + int(timeLine[2]) + 60;
 
     // adjust the map to the limits of the area and time
     if (findLimits)
@@ -116,7 +117,8 @@ void readInFileBlinkingPoints(String filename, color openColor, color closedColo
 
   // visualise the names of the columns
   //println((Object[])route.getColumnTitles());
-  println(filename);
+  //println(filename);
+  
   // extract columns of data from the table
   float [] lats = route.getFloatColumn("lat");//"LATITUDE");
   float [] lons = route.getFloatColumn("long");//"LONGITUDE");    
