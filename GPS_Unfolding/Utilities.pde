@@ -30,7 +30,7 @@ AnimatedPointMarker readInFile(String filename, String name, boolean traces) {
 
     // extract time information
     String [] timeLine = split(time[i], ":");
-    int myTime = 3600*int(timeLine[0]) + 60*int(timeLine[1]) + int(timeLine[2]) + 60;
+    int myTime = 3600*int(timeLine[0]) + 60*int(timeLine[1]) + int(timeLine[2]) - 60;
 
     // adjust the map to the limits of the area and time
     if (findLimits)
@@ -67,7 +67,8 @@ AnimatedPointMarker readInFile(String filename, String name, boolean traces) {
 
 // read in a CSV tracking movement patterns and store its spatiotemporal path
 // in a linked list of PositionRecords
-void readInFilePoints(String filename, color minColor, color maxColor, MarkerManager manager) throws FileNotFoundException {
+void readInFilePoints(String filename, color minColor, color maxColor, 
+  MarkerManager manager) throws FileNotFoundException {
 
   // open the Driver file and read it into a table
   Table route = loadTable(filename, "header,csv");
@@ -110,7 +111,8 @@ void readInFilePoints(String filename, color minColor, color maxColor, MarkerMan
 
 // read in a CSV tracking movement patterns and store its spatiotemporal path
 // in a linked list of PositionRecords
-void readInFileBlinkingPoints(String filename, color openColor, color closedColor, MarkerManager manager) throws FileNotFoundException {
+void readInFileBlinkingPoints(String filename, color openColor, color closedColor, 
+  MarkerManager manager) throws FileNotFoundException {
 
   // open the Driver file and read it into a table
   Table route = loadTable(filename, "header,csv");
@@ -174,10 +176,16 @@ void readInFileBlinkingPoints(String filename, color openColor, color closedColo
 
 // OTHER
 
-color[] palette = {color(166,206,227), color(31,120,180), 
+/*color[] palette = {color(166,206,227), color(31,120,180), 
   color(178,223,138), color(51,160,44), color(251,154,153), 
   color(227,26,28), color(253,191,111), color(255,127,0), 
   color(202,178,214)};
+*/
+
+color[] palette = {color(166,206,227), color(31,120,180), color(178,223,138), 
+color(51,160,44), color(251,154,153), color(227,26,28), color(253,191,111), 
+color(255,127,0), color(202,178,214), color(106,61,154), color(255,255,153), 
+color(177,89,40), color(141,211,199), color(255,237,111)};
 
 PVector bufferVals(PVector maxmin, float percentageBuffer)
 {

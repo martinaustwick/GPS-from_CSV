@@ -30,8 +30,8 @@ boolean enable_agents = true;
 // identifying the data to utilise
 //
 int selectOneFile = -1;//-1; // -1 to draw all tracks at once, 0+ to draw each track individually
-int maxFile = 9;//7;
-int minManifest = 1;
+int maxFile = 13;//7;
+int minManifest = 2;
 int maxManifest = 2;
 
 // world parameters
@@ -49,6 +49,7 @@ int timeIndex;
 float trackAlpha = 50;
 float strokoo = 5;
 boolean findLimits = true;
+int colorIndex = 0;
 
 int walkingWidth = 20;//15;
 int drivingWidth = 12;//7;
@@ -100,18 +101,21 @@ void setup()
     maxTime = -1;
   }
 
-  readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_261016.csv", 
+/*  readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_261016.csv", 
     "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv");
   readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_251016.csv", 
     "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv");
   readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_271016.csv", 
     "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv");
-
-/*  readInDir("/Users/swise/Projects/FTC/data/GnewtN_251016/GnewtN_", "_251016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtN.csv");
-  readInDir("/Users/swise/Projects/FTC/data/GnewtS_251016/GnewtS_", "_251016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtS.csv");
 */
+  readInDir("/Users/swise/Projects/FTC/data/GnewtN_251016/GnewtN_", "_251016.csv", 
+    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtN.csv",color(50,220,150));
+  readInDir("/Users/swise/Projects/FTC/data/GnewtS_251016/GnewtS_", "_251016.csv", 
+    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtS.csv", color(50,150,220));
+  readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_251016.csv", 
+    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtS.csv", color(220,220,100));
+  
+  
   // set up the map for visualisation
   Location centrePoint = new Location(0.5 * (latLims.x + latLims.y), 
     0.5 * (lonLims.x + lonLims.y));
@@ -132,15 +136,13 @@ void setup()
 }
 
 void readInDir(String dirTrace, String dirTraceSuffix, 
-  String dirManifest, String dirManifestSuffix) {
+  String dirManifest, String dirManifestSuffix, color myAssignedColor) {
   // go through the files and read in the driver/vehicle pairs
   for (int f = max(1, selectOneFile); f<=maxFile; f++)
   {      
-
-
     // first process the driver
     String filename = dirTrace + str(f) + "D" + dirTraceSuffix;
-    color myColor = palette[int(random(palette.length))];
+    color myColor = myAssignedColor;//palette[colorIndex];
 
     if (f > 0 ) {
 
@@ -151,6 +153,9 @@ void readInDir(String dirTrace, String dirTraceSuffix,
         driver.setStrokeColor(color(0, 0, 0));
         mm_agents.addMarker(driver);
         mm_heatmap.addMarker(driver.getTail());
+        colorIndex = colorIndex + 1; // only increase index if it's successfully read in
+        if(colorIndex > palette.length)
+          colorIndex = 0;
       }
 
       // next the vehicle
@@ -166,7 +171,7 @@ void readInDir(String dirTrace, String dirTraceSuffix,
       }
     }
     // finally, an associated manifest
-
+/*
     if (f >= minManifest && f <= maxManifest) {
       filename = dirManifest + str(f) + dirManifestSuffix;
       // taken from https://processing.org/discourse/beta/num_1261125421.html
@@ -178,6 +183,7 @@ void readInDir(String dirTrace, String dirTraceSuffix,
       catch (FileNotFoundException e) {
       }
     }
+    */
   }
 
   // add the MarkerManagers to the map itself
