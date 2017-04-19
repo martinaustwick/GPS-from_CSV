@@ -30,7 +30,7 @@ class AnimatedPointMarker extends SimplePointMarker {
       if(hasTail){
         myTail = new SimpleLinesMarker();
         myTail.setStrokeWeight((int)strokoo);
-        myTail.setColor(color(250, 250,250,10));//250, 250, 70));
+        myTail.setColor(color(250, 250,250,70));//250, 250, 70));
       }
   }
 

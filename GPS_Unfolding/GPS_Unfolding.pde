@@ -29,10 +29,10 @@ boolean enable_agents = true;
 //
 // identifying the data to utilise
 //
-int selectOneFile = -1;//-1; // -1 to draw all tracks at once, 0+ to draw each track individually
-int maxFile = 13;//7;
-int minManifest = 2;
-int maxManifest = 2;
+int selectOneFile = 1;//-1; // -1 to draw all tracks at once, 0+ to draw each track individually
+int maxFile = 1;//7;
+int minManifest = 1;
+int maxManifest = 1;
 
 // world parameters
 PVector latLims = new PVector(51.5, 51.6);
@@ -42,7 +42,7 @@ float driftLimit = 0.001;
 
 // time parameters
 int startMam = 9*3600; // CHANGE THIS to change the start time!
-int mamChange = 5; // CHANGE THIS to make time run faster or slower
+int mamChange = 1; // CHANGE THIS to make time run faster or slower
 int timeIndex;
 
 // graphical parameters
@@ -110,11 +110,14 @@ void setup()
 */
   readInDir("/Users/swise/Projects/FTC/data/GnewtN_251016/GnewtN_", "_251016.csv", 
     "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtN.csv",color(50,220,150));
-  readInDir("/Users/swise/Projects/FTC/data/GnewtS_251016/GnewtS_", "_251016.csv", 
+/*  readInDir("/Users/swise/Projects/FTC/data/GnewtS_251016/GnewtS_", "_251016.csv", 
     "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtS.csv", color(50,150,220));
   readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_251016.csv", 
     "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtS.csv", color(220,220,100));
-  
+*/  
+    readInDir("/Users/swise/Projects/FTC/data/GnewtN_271016/GnewtN_", "_271016.csv", 
+    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/271016_", "_GnewtN.csv",color(220,50,150));
+
   
   // set up the map for visualisation
   Location centrePoint = new Location(0.5 * (latLims.x + latLims.y), 
@@ -151,6 +154,8 @@ void readInDir(String dirTrace, String dirTraceSuffix,
         driver.setColor(myColor);
         driver.setStrokeWeight(2);
         driver.setStrokeColor(color(0, 0, 0));
+        color newColor = (myColor & 0xffffff) | (50 << 24);
+        driver.getTail().setColor(newColor);
         mm_agents.addMarker(driver);
         mm_heatmap.addMarker(driver.getTail());
         colorIndex = colorIndex + 1; // only increase index if it's successfully read in
@@ -183,7 +188,7 @@ void readInDir(String dirTrace, String dirTraceSuffix,
       catch (FileNotFoundException e) {
       }
     }
-    */
+   */ 
   }
 
   // add the MarkerManagers to the map itself
