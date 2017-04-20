@@ -25,6 +25,7 @@ import de.fhpotsdam.unfolding.tiles.MBTilesLoaderUtils;
 boolean paused = false;
 boolean enable_heatmap = false;
 boolean enable_agents = true;
+boolean enable_manifest = false;
 
 //
 // identifying the data to utilise
@@ -42,7 +43,7 @@ float driftLimit = 0.001;
 
 // time parameters
 int startMam = 9*3600; // CHANGE THIS to change the start time!
-int mamChange = 1; // CHANGE THIS to make time run faster or slower
+int mamChange = 15; // CHANGE THIS to make time run faster or slower
 int timeIndex;
 
 // graphical parameters
@@ -108,14 +109,14 @@ void setup()
   readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_271016.csv", 
     "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv");
 */
-  readInDir("/Users/swise/Projects/FTC/data/GnewtN_251016/GnewtN_", "_251016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtN.csv",color(50,220,150));
+//  readInDir("/Users/swise/Projects/FTC/data/GnewtN_251016/GnewtN_", "_251016.csv", 
+//    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtN.csv",color(50,220,150));
 /*  readInDir("/Users/swise/Projects/FTC/data/GnewtS_251016/GnewtS_", "_251016.csv", 
     "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtS.csv", color(50,150,220));
   readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_251016.csv", 
     "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtS.csv", color(220,220,100));
 */  
-    readInDir("/Users/swise/Projects/FTC/data/GnewtN_271016/GnewtN_", "_271016.csv", 
+   readInDir("/Users/swise/Projects/FTC/data/GnewtN_271016/GnewtN_", "_271016.csv", 
     "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/271016_", "_GnewtN.csv",color(220,50,150));
 
   
@@ -176,6 +177,27 @@ void readInDir(String dirTrace, String dirTraceSuffix,
       }
     }
     // finally, an associated manifest
+    if (f >= minManifest && f <= maxManifest) {
+      
+      filename = dirManifest + str(f) + dirManifestSuffix;
+      
+      // taken from https://processing.org/discourse/beta/num_1261125421.html
+      color newColor = (myColor & 0xffffff) | (100 << 24); 
+      try {
+        AnimatedPointMarker manifest = readInFilePoints(filename, myColor, 
+          newColor, color(220, 220, 220, 100), mm_deliveries);
+        if(manifest != null){
+          
+          mm_deliveries.addMarker(manifest);
+          SimpleLinesMarker manifestTail = manifest.getTail();
+          manifestTail.setStrokeWeight(1);
+          mm_deliveries.addMarker(manifest.getTail());
+        }
+      } 
+      catch (FileNotFoundException e) {
+      }
+    }
+
 /*
     if (f >= minManifest && f <= maxManifest) {
       filename = dirManifest + str(f) + dirManifestSuffix;
@@ -208,15 +230,20 @@ void draw()
 
   if (! paused) {
 
-    List<Object> myPickups = mm_deliveries.getMarkers(); 
-    for (int i = 0; i < myPickups.size(); i++) {
-      ((BlinkingPointMarker)myPickups.get(i)).checkIfUpdated(timeIndex);
-    }
-
     // only proceed if the time is within the bounds
-    if (timeIndex <= maxTime && timeIndex >=minTime)
+    if (timeIndex <= maxTime && timeIndex >=minTime){
       for (Object o : mm_agents.getMarkers())
         ((AnimatedPointMarker) o).setToTime(timeIndex);
+      List<Object> myPickups = mm_deliveries.getMarkers(); 
+      for (int i = 0; i < myPickups.size(); i++) {
+        Object o = myPickups.get(i);
+        if(o instanceof AnimatedPointMarker)
+          ((AnimatedPointMarker)o).setToTime(timeIndex);
+          else if(o instanceof TimedPointMarker)
+          ((TimedPointMarker)o).checkIfUpdated(timeIndex);
+      }
+
+    }
 
     // update the time index
     timeIndex += mamChange; // ...but don't exceed the temporal boundaries
@@ -246,5 +273,10 @@ void keyPressed() {
     enable_agents = !enable_agents;
     if (enable_agents) mm_agents.enableDrawing();
     else mm_agents.disableDrawing();
+  }
+  if( key == 'm') { // flip the visibility of the manifest
+    enable_manifest = !enable_manifest;
+    if(enable_manifest) mm_deliveries.enableDrawing();
+    else mm_deliveries.disableDrawing();
   }
 }

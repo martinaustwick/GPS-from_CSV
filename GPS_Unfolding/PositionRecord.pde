@@ -29,4 +29,8 @@ class PositionRecord {
     prev = pr;
     if(pr != null) pr.next = this;
   }
+  
+  Location getPosition(){
+    return position;
+  }
 }

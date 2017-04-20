@@ -38,6 +38,15 @@ class AnimatedPointMarker extends SimplePointMarker {
   AnimatedPointMarker(PositionRecord start) {
       this(start, "", false);
   }
+  
+  // constructor
+  AnimatedPointMarker(PositionRecord start, color bodyColor, color tailColor){
+     this(start, "", true);
+     myColor = bodyColor;
+     setColor(myColor);
+     setStrokeColor(myColor);
+     myTail.setColor(tailColor);
+  }
 
   // move the point marker either forward or backward in time to the specified
   // timestep
