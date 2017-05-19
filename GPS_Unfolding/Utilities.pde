@@ -4,6 +4,7 @@
 // in a linked list of PositionRecords
 AnimatedPointMarker readInFile(String filename, String name, boolean traces) {
 
+  print("READINFILE");
   Table route;
   // open the Driver file and read it into a table
   try {
@@ -58,7 +59,7 @@ AnimatedPointMarker readInFile(String filename, String name, boolean traces) {
 
     // Create the marker
     PositionRecord head = getHead(prevRecord);
-      println(head.time);
+    println(head.time);
 
     return new AnimatedPointMarker(head, name, traces);
   } 
@@ -73,26 +74,28 @@ AnimatedPointMarker readInFile(String filename, String name, boolean traces) {
 AnimatedPointMarker readInFilePoints(String filename, color walkColor, color stopColor, color lineColor, 
   MarkerManager manager) throws FileNotFoundException {
 
+   print("READINFILEPOINTS");
+
   // open the Driver file and read it into a table
   Table route = loadTable(filename, "header,csv");
 
   // visualise the names of the columns
-  //println((Object[])route.getColumnTitles());
+  println((Object[])route.getColumnTitles());
 
   // extract columns of data from the table
   float [] lats = route.getFloatColumn("lat");
   float [] lons = route.getFloatColumn("long");
   String [] arrivals = route.getStringColumn("Time");
   String [] modes = route.getStringColumn("Mode");
- // Location stopLocation = null;
+  // Location stopLocation = null;
 
   // keeps track of the 
   PositionRecord prevStop = null;
- // PositionRecord prevPr = null;
+  // PositionRecord prevPr = null;
 
   // default time if it's missing from the dataset 
   int lastTime = 6*3600; // 6am default
-println("what: ");
+  println("what: ");
   // iterate over the records, clean them accordingly, and store them
   for (int i=1; i<lons.length; i++)
   {
@@ -120,11 +123,11 @@ println("what: ");
     } else
       myTime = myTime + 1;
     lastTime = myTime;
-    
-     if (myTime > maxTime) maxTime = myTime;
-     if (myTime < minTime) minTime = myTime;
 
-    
+    if (myTime > maxTime) maxTime = myTime;
+    if (myTime < minTime) minTime = myTime;
+
+
     // add a TimedPointMarker colored by the type of stop
     // update the newest point in the movement network
     Location myLoc = new Location(lats[i], lons[i]);
@@ -166,11 +169,119 @@ println("what: ");
   return(new AnimatedPointMarker(getHead(prevStop), color(0, 0, 0, 0), lineColor));
 }
 
+
+// read in a CSV tracking movement patterns and store its spatiotemporal path
+// in a linked list of PositionRecords. In particular, read in the edges 
+// defined by the stopping points
+void readInFilePointsAsRings(String filename, color walkColor, color lineColor, 
+  MarkerManager managerLines, MarkerManager managerPoints) throws FileNotFoundException {
+
+  print("READINFILEPOINTSASRINGS");
+
+  // open the Driver file and read it into a table
+  Table route = loadTable(filename, "header,tsv");
+  if(((Object[])route.getColumnTitles()).length <= 1)
+    route = loadTable(filename, "header,csv");
+    
+  // visualise the names of the columns
+  //println((Object[])route.getColumnTitles());
+
+  // extract columns of data from the table
+  float [] lats = route.getFloatColumn("lat");
+  float [] lons = route.getFloatColumn("long");
+  String [] arrivals = route.getStringColumn("Time");
+  String [] modes = route.getStringColumn("Mode");
+  // Location stopLocation = null;
+
+  // keeps track of the beginning of the given ring
+  PositionRecord previousStop = null;
+  PositionRecord parkingSpace = null;
+
+  int numRings = 0;
+
+  // default time if it's missing from the dataset 
+  int lastTime = 6*3600; // 6am default
+
+  // iterate over the records, clean them accordingly, and store them
+  for (int i=1; i<lons.length; i++)
+  {
+
+    // extract time information
+    int myTime = lastTime;
+    if ((arrivals[i]).length() > 0 && arrivals[i].contains(":")) {
+      String [] timeLine = split(arrivals[i], ":");
+      myTime = 3600*int(timeLine[0].trim()) + 60*(int(timeLine[1].trim()) - 2) ;
+    } else
+      myTime = myTime + 1;
+    lastTime = myTime;
+
+    if (myTime > maxTime) maxTime = myTime;
+    if (myTime < minTime) minTime = myTime;
+
+
+    // add a TimedPointMarker colored by the type of stop
+    // update the newest point in the movement network
+    Location myLoc = new Location(lats[i], lons[i]);
+
+    // handle this point based on the mode of transit involved
+    String mode = modes[i].trim();
+    //print(mode + " ");
+
+    // if the vehicle has walked, add a line back to the stop location
+
+    // driver moving away from the vehicle
+    if (mode.equals("Walking")) {
+      PositionRecord walkPr = new PositionRecord( myTime, myLoc);
+      walkPr.setPrev(previousStop);
+      if(previousStop == null)
+         parkingSpace = walkPr;
+      previousStop = walkPr;    
+    }
+
+    // otherwise, the vehicle itself has moved. Create and save any rings which have
+    // been in the process of being created!!
+    else { 
+
+      // if previous stop is not null, there's stuff in there. Upload it
+      if (previousStop != null) {
+        PositionRecord walkPr = new PositionRecord( myTime, myLoc);
+        walkPr.setPrev(previousStop);      
+     /*   if(parkingSpace != null && parkingSpace.position != myLoc){
+           PositionRecord completeMe = new PositionRecord(myTime + 1, parkingSpace.position);
+           completeMe.setPrev(walkPr);
+           walkPr = completeMe;
+        }
+      */  AnimatedPointMarker apm = new AnimatedPointMarker(getHead(walkPr), walkColor, palette[numRings % palette.length]);
+        managerPoints.addMarker(apm);
+        managerLines.addMarker(apm.getTail());
+        apm.getTail().setStrokeWeight(3);
+        
+        print("HELLO THERE I AM A RING\n");
+        numRings++;
+        print(printOutAll(walkPr));
+        print("\n");
+      }
+      else {
+       print("I am not a ring of any kind\n"); 
+      }
+
+      previousStop = null;
+      parkingSpace = null;
+    }
+  }
+  
+  print("WHATTTTT\n");
+  // end
+}
+
 // read in a CSV tracking movement patterns and store its spatiotemporal path
 // in a linked list of PositionRecords
 void readInFileBlinkingPoints(String filename, color openColor, color closedColor, 
   MarkerManager manager) throws FileNotFoundException {
 
+   print("READINFILEBLINKINGPOINTS");
+
+    
   // open the Driver file and read it into a table
   Table route = loadTable(filename, "header,csv");
 
@@ -310,6 +421,13 @@ PositionRecord getHead(PositionRecord pr) {
   if (pr.prev != null) return getHead(pr.prev);
   else return pr;
 }
+
+// return the header of this object
+String printOutAll(PositionRecord pr) {
+  if (pr.prev != null) return printOutAll(pr.prev) + "\t" + pr.position.toString();
+  else return "HEADED WITH: " + pr.position.toString();
+}
+
 
 color interpolateColor(float percent, color c1, color c2) {
   float d_r = red(c1) - red(c2);

@@ -30,10 +30,10 @@ boolean enable_manifest = false;
 //
 // identifying the data to utilise
 //
-int selectOneFile = 1;//-1; // -1 to draw all tracks at once, 0+ to draw each track individually
-int maxFile = 1;//7;
-int minManifest = 1;
-int maxManifest = 1;
+int selectOneFile = 2;//-1; // -1 to draw all tracks at once, 0+ to draw each track individually
+int maxFile = 2;//7;
+int minManifest = 2;
+int maxManifest = 2;
 
 // world parameters
 PVector latLims = new PVector(51.5, 51.6);
@@ -62,6 +62,7 @@ UnfoldingMap map;
 MarkerManager mm_agents;
 MarkerManager mm_heatmap;
 MarkerManager mm_deliveries;
+MarkerManager mm_invisible;
 
 
 
@@ -88,6 +89,7 @@ void setup()
   mm_agents = new MarkerManager<Marker>();
   mm_heatmap = new MarkerManager<Marker>();
   mm_deliveries = new MarkerManager<Marker>();
+  mm_invisible = new MarkerManager<Marker>();
 
   // set
   map.zoomToLevel(14);
@@ -108,17 +110,23 @@ void setup()
     "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv");
   readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_271016.csv", 
     "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv");
-*/
-//  readInDir("/Users/swise/Projects/FTC/data/GnewtN_251016/GnewtN_", "_251016.csv", 
-//    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtN.csv",color(50,220,150));
-/*  readInDir("/Users/swise/Projects/FTC/data/GnewtS_251016/GnewtS_", "_251016.csv", 
+
+  readInDir("/Users/swise/Projects/FTC/data/GnewtN_251016/GnewtN_", "_251016.csv", 
+    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtN.csv",color(50,220,150));
+*/  readInDir("/Users/swise/Projects/FTC/data/GnewtS_251016/GnewtS_", "_251016.csv", 
     "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtS.csv", color(50,150,220));
-  readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_251016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtS.csv", color(220,220,100));
-*/  
+  /*readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_251016.csv", 
+    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv", color(220,220,100));
+
+/*  readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_261016.csv", 
+    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv", color(220,220,100));
+  /*
    readInDir("/Users/swise/Projects/FTC/data/GnewtN_271016/GnewtN_", "_271016.csv", 
     "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/271016_", "_GnewtN.csv",color(220,50,150));
-
+*/
+/*   readInDir("/Users/swise/Projects/FTC/data/GnewtN_271016/GnewtN_", "_271016.csv", 
+    "/Users/swise/Projects/FTC/data/ThuBa/hello", ".csv",color(50,220,150));
+*/
   
   // set up the map for visualisation
   Location centrePoint = new Location(0.5 * (latLims.x + latLims.y), 
@@ -184,33 +192,25 @@ void readInDir(String dirTrace, String dirTraceSuffix,
       // taken from https://processing.org/discourse/beta/num_1261125421.html
       color newColor = (myColor & 0xffffff) | (100 << 24); 
       try {
+
+        readInFilePointsAsRings(filename, myColor, newColor, mm_deliveries, mm_invisible);
+/*
+RUBBISH CUT IT OFF
         AnimatedPointMarker manifest = readInFilePoints(filename, myColor, 
           newColor, color(220, 220, 220, 100), mm_deliveries);
         if(manifest != null){
-          
+    
           mm_deliveries.addMarker(manifest);
           SimpleLinesMarker manifestTail = manifest.getTail();
           manifestTail.setStrokeWeight(1);
           mm_deliveries.addMarker(manifest.getTail());
         }
-      } 
+  */    } 
       catch (FileNotFoundException e) {
       }
     }
 
-/*
-    if (f >= minManifest && f <= maxManifest) {
-      filename = dirManifest + str(f) + dirManifestSuffix;
-      // taken from https://processing.org/discourse/beta/num_1261125421.html
 
-      color newColor = (myColor & 0xffffff) | (100 << 24); 
-      try {
-        readInFileBlinkingPoints(filename, newColor, color(255, 255, 255, 100), mm_deliveries);
-      } 
-      catch (FileNotFoundException e) {
-      }
-    }
-   */ 
   }
 
   // add the MarkerManagers to the map itself
@@ -224,6 +224,7 @@ void readInDir(String dirTrace, String dirTraceSuffix,
   println(latLims + "\n" + lonLims);
 }
 
+
 void draw()
 {  
   background(0);
@@ -235,6 +236,15 @@ void draw()
       for (Object o : mm_agents.getMarkers())
         ((AnimatedPointMarker) o).setToTime(timeIndex);
       List<Object> myPickups = mm_deliveries.getMarkers(); 
+      for (int i = 0; i < myPickups.size(); i++) {
+        Object o = myPickups.get(i);
+        if(o instanceof AnimatedPointMarker)
+          ((AnimatedPointMarker)o).setToTime(timeIndex);
+          else if(o instanceof TimedPointMarker)
+          ((TimedPointMarker)o).checkIfUpdated(timeIndex);
+      }
+
+      myPickups = mm_invisible.getMarkers(); 
       for (int i = 0; i < myPickups.size(); i++) {
         Object o = myPickups.get(i);
         if(o instanceof AnimatedPointMarker)
