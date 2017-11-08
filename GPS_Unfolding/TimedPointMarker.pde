@@ -67,6 +67,7 @@ class TimedPointMarker extends SimplePointMarker {
         pg.textFont(font);
       }
       pg.fill(color(0, 0, 0, 100));
+      pg.stroke(color(255,255,255));
       pg.text(myName, Math.round(x + space * 0.75f + strokeWeight / 2), 
         Math.round(y + strokeWeight / 2 - space * 0.75f));
     }

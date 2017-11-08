@@ -1,0 +1,39 @@
+---
+title: "Workflow for FTC Data Viz, Part 9847945"
+output: html_notebook
+---
+
+Read in the nodes 
+```{r}
+nodes <- read.table("/Users/swise/Projects/FTC/data/ThuBa/FTCPresentationOct2017/nodes.csv", header=TRUE, sep="\t")
+```
+
+The data for case 1
+
+```{r}
+c1 <- c("None", "9AM", "10AM", "10AM", "12PM", "12PM", "None", "None", "None", "None", "None", "None", "None", "None", "12PM", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None")
+case1 <- data.frame(cbind(1:length(c1),c1, rep("S", length(c1))))
+case1 <- merge(x=nodes, y=case1, by.x="Node.ID", by.y="V1", all=TRUE)
+write.table(case1, file="/Users/swise/case1.txt", sep="\t", row.names=FALSE, quote=FALSE)
+```
+
+The data for case 2
+
+```{r}
+c2 <- c("None", "9AM", "10AM", "10AM", "12PM", "12PM", "9AM", "None", "None", "None", "10AM", "None", "9AM", "None", "None", "None", "None", "None", "None", "None", "None", "None", "10AM", "None", "12PM", "None", "None", "12PM", "None", "None", "None", "None", "None", "None", "12PM", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None")
+case2 <- data.frame(cbind(1:length(c2),c2, rep("S", length(c2))))
+case2 <- merge(x=nodes, y=case2, by.x="Node.ID", by.y="V1")
+write.table(case2, file="/Users/swise/case2.txt", sep="\t", row.names=FALSE, quote=FALSE)
+```
+
+The data for case 3
+
+```{r}
+c3 <- c("None", "9AM", "10AM", "10AM", "12PM", "12PM", "None", "12PM", "12PM", "12PM", "None", "None", "None", "None", "12PM", "None", "10AM", "9AM", "None", "None", "None", "9AM", "None", "None", "None", "None", "None", "None", "None", "None", "9AM", "None", "None", "None", "10AM", "None", "None", "None", "None", "None", "None", "None", "None", "12PM", "12PM", "None", "10AM", "None", "None", "None", "None", "None", "9AM", "None", "None", "10AM", "None", "None")
+c3Status <- c("S", "S", "S", "S", "S", "S", "S", "S", "VIOLATED", "S", "S", "S", "S", "S", "S", "S", "VIOLATED", "VIOLATED", "S", "S", "S", "VIOLATED", "S", "S", "S", "S", "S", "S", "S", "S", "VIOLATED", "S", "S", "S", "VIOLATED", "S", "S", "S", "S", "S", "S", "S", "S", "VIOLATED", "S", "S", "S", "S", "S", "S", "S", "S", "VIOLATED", "S", "S", "S", "S", "S")
+c3Time <- c("", "", "", "", "", "", "", "", "12:56PM", "", "", "", "", "", "", "", "10:53AM", "12:43PM", "", "", "", "9:50AM", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "12:23PM", "", "", "", "", "")
+case3 <- data.frame(cbind(1:length(c3),c3, c3Status, c3Time))
+case3 <- merge(x=nodes, y=case3, by.x="Node.ID", by.y="V1")
+write.table(case3, file="/Users/swise/case3.txt", sep="\t", row.names=FALSE, quote=FALSE)
+```
+

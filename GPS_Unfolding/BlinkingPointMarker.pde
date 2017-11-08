@@ -5,7 +5,7 @@ class BlinkingPointMarker extends SimplePointMarker {
   boolean paused = false;
   int myTime = -1;
   
-  int defaultSize = 4;
+  int defaultSize = 10;//4;
   float shrinkParameter = 70.;
   int blinkSpeed = 2400;
 
@@ -54,14 +54,17 @@ class BlinkingPointMarker extends SimplePointMarker {
       pg.pushStyle();
       pg.strokeWeight(this.strokeWeight);
 
-      if (isSelected() || paused) { // it's not blinking
+/*      if (isSelected() || paused) { // it's not blinking
            pg.fill(myColor);
            radius = defaultSize;
       } else { // it's blinking
            pg.fill(this.strokeColor);
            radius = ((timeIndex % blinkSpeed) - .5 * blinkSpeed)/shrinkParameter;
       }
-      
+     */
+                pg.fill(myColor);
+           radius = defaultSize;
+
       if(square) {
         pg.rect(x, y, radius, radius);
       }

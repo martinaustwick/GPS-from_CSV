@@ -30,10 +30,10 @@ boolean enable_manifest = false;
 //
 // identifying the data to utilise
 //
-int selectOneFile = 13;//-1; // -1 to draw all tracks at once, 0+ to draw each track individually
-int maxFile = 13;//7;
-int minManifest = 13;
-int maxManifest = 13;
+int selectOneFile = 3;//-1; // -1 to draw all tracks at once, 0+ to draw each track individually
+int maxFile = 3;//7;
+int minManifest = 3;
+int maxManifest = 3;
 
 // world parameters
 PVector latLims = new PVector(51.5, 51.6);
@@ -49,7 +49,7 @@ int timeIndex;
 // graphical parameters
 float trackAlpha = 50;
 float strokoo = 5;
-boolean findLimits = true;
+boolean findLimits = false;
 int colorIndex = 0;
 
 int walkingWidth = 20;//15;
@@ -63,7 +63,7 @@ MarkerManager mm_agents;
 MarkerManager mm_heatmap;
 MarkerManager mm_deliveries;
 MarkerManager mm_invisible;
-
+MarkerManager mm_deliveryStatus;
 
 
 // images
@@ -90,6 +90,7 @@ void setup()
   mm_heatmap = new MarkerManager<Marker>();
   mm_deliveries = new MarkerManager<Marker>();
   mm_invisible = new MarkerManager<Marker>();
+  mm_deliveryStatus = new MarkerManager<Marker>();
 
   // set
   map.zoomToLevel(14);
@@ -104,35 +105,11 @@ void setup()
     maxTime = -1;
   }
 
-  readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_271016.csv", 
-    "/Users/swise/Projects/FTC/data/ThuBa/slide", ".csv", color(220,220,100));
-    /*readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_251016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv");
-  readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_271016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv");
 
-  readInDir("/Users/swise/Projects/FTC/data/GnewtN_251016/GnewtN_", "_251016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtN.csv",color(50,220,150));
-*//*
 readInDir("/Users/swise/Projects/FTC/data/GnewtS_251016/GnewtS_", "_251016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtS.csv", color(50,150,220));
+    "/Users/swise/Projects/FTC/data/ThuBa/FTCPresentationOct2017/", ".csv", color(50,150,220));
 
-/*readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_261016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv", color(50,150,220));
-/*readInDir("/Users/swise/Projects/FTC/data/GnewtN_251016/GnewtN_", "_251016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtN.csv", color(50,150,220));
-  /*readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_251016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv", color(220,220,100));
 
-/*  readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_261016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv", color(220,220,100));
-  /*
-   readInDir("/Users/swise/Projects/FTC/data/GnewtN_271016/GnewtN_", "_271016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/271016_", "_GnewtN.csv",color(220,50,150));
-*/
-//readInDir("/Users/swise/Projects/FTC/data/GnewtN_271016/GnewtN_", "_271016.csv", 
-//    "/Users/swise/Projects/FTC/data/ThuBa/slide", ".csv",color(50,220,150));
-  
   // set up the map for visualisation
   Location centrePoint = new Location(0.5 * (latLims.x + latLims.y), 
     0.5 * (lonLims.x + lonLims.y));
@@ -159,26 +136,26 @@ void readInDir(String dirTrace, String dirTraceSuffix,
   {      
     // first process the driver
     String filename = dirTrace + str(f) + "D" + dirTraceSuffix;
-    color myColor = palette[colorIndex];//myAssignedColor;//
+    color myColor = color(255,255,255);//palette[colorIndex];//myAssignedColor;//
 
     if (f > 0 ) {
 
-      AnimatedPointMarker driver = readInFile(filename, "" + f, true);
+    /*  AnimatedPointMarker driver = readInFile(filename, "" + f, true);
       if (driver != null) {
         driver.setColor(myColor);
         driver.setStrokeWeight(2);
-        driver.setStrokeColor(color(0, 0, 0));
-        color newColor = (myColor & 0xffffff) | (50 << 24);
+//        driver.setStrokeColor(color(0, 0, 0));
+        color newColor = (myColor & 0xffffff) | (80 << 24);
         driver.getTail().setColor(newColor);
-  //      mm_agents.addMarker(driver);
-  //      mm_heatmap.addMarker(driver.getTail());
+        mm_agents.addMarker(driver);
+        mm_heatmap.addMarker(driver.getTail());
         colorIndex = colorIndex + 1; // only increase index if it's successfully read in
         if(colorIndex > palette.length)
           colorIndex = 0;
       }
 
       // next the vehicle
-/*
+
       filename = dirTrace + str(f) + "V" + dirTraceSuffix;
       AnimatedPointMarker vehicle = readInFile(filename, "", false);
       if (vehicle != null) {
@@ -186,47 +163,40 @@ void readInDir(String dirTrace, String dirTraceSuffix,
         vehicle.setColor(myColor);
         vehicle.setStrokeColor(color(0, 0, 0));
         vehicle.setStrokeWeight(0);
-        mm_agents.addMarker(vehicle);
-      } */
+     //   mm_agents.addMarker(vehicle);
+      } 
     }
-    // finally, an associated manifest
+*/    // finally, an associated manifest
     if (f >= minManifest && f <= maxManifest) {
       
-      filename = dirManifest + str(f) + dirManifestSuffix;
+      filename = dirManifest + "output_case" + str(f) + dirManifestSuffix;
+      println(filename);
       
       // taken from https://processing.org/discourse/beta/num_1261125421.html
       color newColor = (myColor & 0xffffff) | (100 << 24); 
       try {
 
-        readInFilePointsMING(filename, color(200,200,0), color(250,0,0), //newColor, 
-        mm_deliveries, 3, 2);
-/*
-RUBBISH CUT IT OFF
-        AnimatedPointMarker manifest = readInFilePoints(filename, myColor, 
-          newColor, color(220, 220, 220, 100), mm_deliveries);
-        if(manifest != null){
-    
-          mm_deliveries.addMarker(manifest);
-          SimpleLinesMarker manifestTail = manifest.getTail();
-          manifestTail.setStrokeWeight(1);
-          mm_deliveries.addMarker(manifest.getTail());
-        }
-  */    } 
+        
+        readInFilePointsMING(filename, color(200,200,0), color(200,0,0), mm_deliveries, 3, 2);
+        filename = dirManifest + "case" + str(f) + ".txt";
+        //readInFilePointsMARTIN(filename, color(200,200,0), color(200,200,200,200), mm_deliveryStatus, 3, 2);
+       }  
       catch (FileNotFoundException e) {
       }
     }
-
+  }
 
   }
 
   // add the MarkerManagers to the map itself
-  map.addMarkerManager(mm_agents);
-  map.addMarkerManager(mm_deliveries);
   map.addMarkerManager(mm_heatmap);
+  map.addMarkerManager(mm_deliveries);
+  map.addMarkerManager(mm_agents);
+  map.addMarkerManager(mm_deliveryStatus);
 
   // defining the limits of the window
-  lonLims = bufferVals(lonLims, 0.2);
-  latLims = bufferVals(latLims, 0.2);
+  //lonLims = bufferVals(lonLims, 0.2);
+  //latLims = bufferVals(latLims, 0.2);
   println(latLims + "\n" + lonLims);
 }
 
@@ -248,6 +218,8 @@ void draw()
           ((AnimatedPointMarker)o).setToTime(timeIndex);
           else if(o instanceof TimedLineMarker)
           ((TimedLineMarker)o).checkIfUpdated(timeIndex);
+          else if(o instanceof TimedPointMarker)
+          ((TimedPointMarker)o).checkIfUpdated(timeIndex);
       }
 
       myPickups = mm_invisible.getMarkers(); 
@@ -257,8 +229,20 @@ void draw()
           ((AnimatedPointMarker)o).setToTime(timeIndex);
           else if(o instanceof TimedLineMarker)
           ((TimedLineMarker)o).checkIfUpdated(timeIndex);
+          else if(o instanceof TimedPointMarker)
+          ((TimedPointMarker)o).checkIfUpdated(timeIndex);
       }
 
+      myPickups = mm_deliveryStatus.getMarkers(); 
+      for (int i = 0; i < myPickups.size(); i++) {
+        Object o = myPickups.get(i);
+        if(o instanceof AnimatedPointMarker)
+          ((AnimatedPointMarker)o).setToTime(timeIndex);
+          else if(o instanceof TimedLineMarker)
+          ((TimedLineMarker)o).checkIfUpdated(timeIndex);
+          else if(o instanceof TimedPointMarker)
+          ((TimedPointMarker)o).checkIfUpdated(timeIndex);
+      }
     }
 
     // update the time index

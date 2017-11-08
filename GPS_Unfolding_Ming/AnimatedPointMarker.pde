@@ -101,13 +101,14 @@ class AnimatedPointMarker extends SimplePointMarker {
            return;
 
       pg.pushStyle();
-      pg.strokeWeight(this.strokeWeight);
+      pg.noStroke();
+/*      pg.strokeWeight(this.strokeWeight);
       if (isSelected()) {
            pg.stroke(this.highlightStrokeColor);
       } else {
            pg.stroke(this.strokeColor);
       }
-      
+  */    
       pg.fill(myColor);
       // fill in the shape responsibly
       if(square) {

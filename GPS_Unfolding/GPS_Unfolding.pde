@@ -26,14 +26,15 @@ boolean paused = false;
 boolean enable_heatmap = false;
 boolean enable_agents = true;
 boolean enable_manifest = false;
+boolean enable_basemap = true;
 
 //
 // identifying the data to utilise
 //
-int selectOneFile = 2;//-1; // -1 to draw all tracks at once, 0+ to draw each track individually
-int maxFile = 2;//7;
-int minManifest = 2;
-int maxManifest = 2;
+int selectOneFile = 3;//-1; // -1 to draw all tracks at once, 0+ to draw each track individually
+int maxFile = 3;//7;
+int minManifest = 3;
+int maxManifest = 3;
 
 // world parameters
 PVector latLims = new PVector(51.5, 51.6);
@@ -52,8 +53,14 @@ float strokoo = 5;
 boolean findLimits = true;
 int colorIndex = 0;
 
+int driverColour = color(255, 0, 0);
+int vehicleColour = color(255, 255, 0);
+
 int walkingWidth = 20;//15;
 int drivingWidth = 12;//7;
+
+AbstractMapProvider smokeAndStarsProvider;
+AbstractMapProvider blankProvider;
 
 //
 // the physical world
@@ -84,8 +91,10 @@ void setup()
     "./data/tiles/LondonSmokeAndStars3.mbtiles");//LondonDemo_noRed.mbtiles");
 
   // set up the UnfoldingMap to hold the data
-  map = new UnfoldingMap(this, new MBTilesMapProvider(tilesStr));
-  //new StamenMapProvider.WaterColor());
+
+  smokeAndStarsProvider = new MBTilesMapProvider(tilesStr);
+  blankProvider = new MBTilesMapProvider();
+  map = new UnfoldingMap(this, smokeAndStarsProvider);//new StamenMapProvider.WaterColor());
   mm_agents = new MarkerManager<Marker>();
   mm_heatmap = new MarkerManager<Marker>();
   mm_deliveries = new MarkerManager<Marker>();
@@ -104,30 +113,11 @@ void setup()
     maxTime = -1;
   }
 
-/*  readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_261016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv");
-  readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_251016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv");
-  readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_271016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv");
-
+//  readInDir("/Users/swise/Projects/FTC/data/GnewtN_251016/GnewtN_", "_251016.csv", 
+//    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtN.csv", color(50, 150, 220));
   readInDir("/Users/swise/Projects/FTC/data/GnewtN_251016/GnewtN_", "_251016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtN.csv",color(50,220,150));
-*/  readInDir("/Users/swise/Projects/FTC/data/GnewtS_251016/GnewtS_", "_251016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/251016_", "_GnewtS.csv", color(50,150,220));
-  /*readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_251016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv", color(220,220,100));
+    "/Users/swise/Projects/FTC/data/ThuBa/FTCPresentationOct2017/", ".csv", color(50, 150, 220));
 
-/*  readInDir("/Users/swise/Projects/FTC/data/TNT_CSV/TNT_", "_261016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/261016_", "_TNT.csv", color(220,220,100));
-  /*
-   readInDir("/Users/swise/Projects/FTC/data/GnewtN_271016/GnewtN_", "_271016.csv", 
-    "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/271016_", "_GnewtN.csv",color(220,50,150));
-*/
-/*   readInDir("/Users/swise/Projects/FTC/data/GnewtN_271016/GnewtN_", "_271016.csv", 
-    "/Users/swise/Projects/FTC/data/ThuBa/hello", ".csv",color(50,220,150));
-*/
-  
   // set up the map for visualisation
   Location centrePoint = new Location(0.5 * (latLims.x + latLims.y), 
     0.5 * (lonLims.x + lonLims.y));
@@ -147,70 +137,97 @@ void setup()
     timeIndex = startMam;
 }
 
+void addVehicle(String filename, color myColor) throws FileNotFoundException {
+  AnimatedPointMarker vehicle = readInFileBasic(filename, "", true);
+  if (vehicle != null) {
+    //myColor = vehicleColour;
+    vehicle.square = true;
+    vehicle.setColor(myColor);
+    vehicle.setStrokeColor(color(0, 0, 0));
+    vehicle.setStrokeWeight(0);
+    color newColor = (myColor & 0xffffff) | (50 << 24);
+    vehicle.getTail().setColor(newColor);
+    mm_agents.addMarker(vehicle);
+    mm_heatmap.addMarker(vehicle.getTail());
+  }
+}
+
+void addDriver(String filename, color myColor) throws FileNotFoundException {
+  AnimatedPointMarker driver = readInFileBasic(filename, "", true);
+  // myColor = palette[int(random(palette.length))];//driverColour;
+  driver.setColor(myColor);
+  driver.setStrokeWeight(2);
+  driver.setStrokeColor(color(0, 0, 0));
+  color newColor = (myColor & 0xffffff) | (100 << 24);
+  driver.getTail().setColor(newColor);
+  mm_agents.addMarker(driver);
+  mm_heatmap.addMarker(driver.getTail());
+}
+
+// for inrix data
+void addDrivers(String filename, color myColor) throws FileNotFoundException {
+  List <AnimatedPointMarker> drivers = readInFileInrix(filename, "", true);
+  for (AnimatedPointMarker driver : drivers) {
+    myColor = palette[int(random(palette.length))];//driverColour;
+    driver.setColor(myColor);
+    driver.setStrokeWeight(2);
+    driver.setStrokeColor(color(0, 0, 0));
+    color newColor = (myColor & 0xffffff) | (100 << 24);
+    driver.getTail().setColor(newColor);
+    mm_agents.addMarker(driver);
+    mm_heatmap.addMarker(driver.getTail());
+    colorIndex = colorIndex + 1; // only increase index if it's successfully read in
+    if (colorIndex > palette.length)
+      colorIndex = 0;
+  }
+}
+
+
 void readInDir(String dirTrace, String dirTraceSuffix, 
   String dirManifest, String dirManifestSuffix, color myAssignedColor) {
+
+  String filename;
+
   // go through the files and read in the driver/vehicle pairs
   for (int f = max(1, selectOneFile); f<=maxFile; f++)
   {      
+
     // first process the driver
-    String filename = dirTrace + str(f) + "D" + dirTraceSuffix;
     color myColor = myAssignedColor;//palette[colorIndex];
 
     if (f > 0 ) {
 
-      AnimatedPointMarker driver = readInFile(filename, "" + f, true);
-      if (driver != null) {
-        driver.setColor(myColor);
-        driver.setStrokeWeight(2);
-        driver.setStrokeColor(color(0, 0, 0));
-        color newColor = (myColor & 0xffffff) | (50 << 24);
-        driver.getTail().setColor(newColor);
-        mm_agents.addMarker(driver);
-        mm_heatmap.addMarker(driver.getTail());
-        colorIndex = colorIndex + 1; // only increase index if it's successfully read in
-        if(colorIndex > palette.length)
-          colorIndex = 0;
-      }
+      // add the driver and vehicle, if desired
+      filename = dirTrace + str(f) + "D" + dirTraceSuffix;
+ //     try { addDriver(filename, myColor); } catch (FileNotFoundException e){}
+
+      //String inrixFilename = dirTrace + dirTraceSuffix;
 
       // next the vehicle
-
       filename = dirTrace + str(f) + "V" + dirTraceSuffix;
-      AnimatedPointMarker vehicle = readInFile(filename, "", false);
-      if (vehicle != null) {
-        vehicle.square = true;
-        vehicle.setColor(myColor);
-        vehicle.setStrokeColor(color(0, 0, 0));
-        vehicle.setStrokeWeight(0);
-        mm_agents.addMarker(vehicle);
-      }
+ //     try { addVehicle(filename, myColor); } catch (FileNotFoundException e){}
     }
-    // finally, an associated manifest
+
+    // add an associated manifest, if desired
     if (f >= minManifest && f <= maxManifest) {
-      
-      filename = dirManifest + str(f) + dirManifestSuffix;
-      
-      // taken from https://processing.org/discourse/beta/num_1261125421.html
-      color newColor = (myColor & 0xffffff) | (100 << 24); 
+
       try {
 
-        readInFilePointsAsRings(filename, myColor, newColor, mm_deliveries, mm_invisible);
-/*
-RUBBISH CUT IT OFF
-        AnimatedPointMarker manifest = readInFilePoints(filename, myColor, 
-          newColor, color(220, 220, 220, 100), mm_deliveries);
-        if(manifest != null){
-    
-          mm_deliveries.addMarker(manifest);
-          SimpleLinesMarker manifestTail = manifest.getTail();
-          manifestTail.setStrokeWeight(1);
-          mm_deliveries.addMarker(manifest.getTail());
-        }
-  */    } 
+        // taken from https://processing.org/discourse/beta/num_1261125421.html
+        color newColor = (myColor & 0xffffff) | (100 << 24); 
+
+        filename = dirManifest + "output_case" + str(f) + dirManifestSuffix;
+        readInFilePointsMING(filename, color(200, 200, 0), color(200, 0, 0), mm_deliveries, 3, 2);
+
+        filename = dirManifest + "case" + str(f) + ".txt";
+        readInFileBlinkingPointsWithAttributes(filename, setUpAttributeMapping(), "Time", mm_deliveries);
+        readInFileTimedPoints(filename, color(255,0,0), "DeliveryTime", mm_deliveries);
+        //readInFileBlinkingPoints(filename, myColor, newColor, mm_deliveries);
+        //readInFilePointsAsRings(filename, myColor, newColor, mm_deliveries, mm_invisible);
+      } 
       catch (FileNotFoundException e) {
       }
     }
-
-
   }
 
   // add the MarkerManagers to the map itself
@@ -224,6 +241,14 @@ RUBBISH CUT IT OFF
   println(latLims + "\n" + lonLims);
 }
 
+HashMap <String, Integer> setUpAttributeMapping(){
+   HashMap <String, Integer> result = new HashMap <String, Integer> ();
+   result.put("9AM", color(255,0,0,150));
+   result.put("10AM", color(255,255,0,150));
+   result.put("12PM", color(0,255,0,150));
+   result.put("None", color(0,0,255,150));
+   return result;
+}
 
 void draw()
 {  
@@ -232,27 +257,21 @@ void draw()
   if (! paused) {
 
     // only proceed if the time is within the bounds
-    if (timeIndex <= maxTime && timeIndex >=minTime){
-      for (Object o : mm_agents.getMarkers())
-        ((AnimatedPointMarker) o).setToTime(timeIndex);
-      List<Object> myPickups = mm_deliveries.getMarkers(); 
-      for (int i = 0; i < myPickups.size(); i++) {
-        Object o = myPickups.get(i);
-        if(o instanceof AnimatedPointMarker)
-          ((AnimatedPointMarker)o).setToTime(timeIndex);
-          else if(o instanceof TimedPointMarker)
-          ((TimedPointMarker)o).checkIfUpdated(timeIndex);
-      }
+    if (timeIndex <= maxTime && timeIndex >=minTime) {
 
-      myPickups = mm_invisible.getMarkers(); 
-      for (int i = 0; i < myPickups.size(); i++) {
-        Object o = myPickups.get(i);
-        if(o instanceof AnimatedPointMarker)
-          ((AnimatedPointMarker)o).setToTime(timeIndex);
-          else if(o instanceof TimedPointMarker)
-          ((TimedPointMarker)o).checkIfUpdated(timeIndex);
+      MarkerManager [] thingsToUpdate = new MarkerManager [] {mm_deliveries, mm_invisible, mm_agents};
+      for (MarkerManager m : thingsToUpdate) {
+        List<Object> myPickups = m.getMarkers();  
+        for (int i = 0; i < myPickups.size(); i++) {
+          Object o = myPickups.get(i);
+          if (o instanceof AnimatedPointMarker)
+            ((AnimatedPointMarker)o).setToTime(timeIndex);
+          else if (o instanceof TimedLineMarker)
+            ((TimedLineMarker)o).checkIfUpdated(timeIndex);
+          else if (o instanceof TimedPointMarker)
+            ((TimedPointMarker)o).checkIfUpdated(timeIndex);
+        }
       }
-
     }
 
     // update the time index
@@ -284,9 +303,9 @@ void keyPressed() {
     if (enable_agents) mm_agents.enableDrawing();
     else mm_agents.disableDrawing();
   }
-  if( key == 'm') { // flip the visibility of the manifest
+  if ( key == 'm') { // flip the visibility of the manifest
     enable_manifest = !enable_manifest;
-    if(enable_manifest) mm_deliveries.enableDrawing();
+    if (enable_manifest) mm_deliveries.enableDrawing();
     else mm_deliveries.disableDrawing();
   }
 }

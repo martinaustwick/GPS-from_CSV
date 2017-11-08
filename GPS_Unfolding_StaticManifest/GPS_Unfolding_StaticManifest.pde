@@ -30,9 +30,10 @@ boolean enable_agents = true;
 //
 // identifying the data to utilise
 //./data/";///
-String baseString = "/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/"; // prefix for csv files (numbered 0-n)
-int selectOneFile = -1; // -1 to draw all tracks at once, 0+ to draw each track individually
-int maxFile = 2;
+String baseString = "/Users/swise/Projects/FTC/data/GnewtN_251016/GnewtN_";////"/Users/swise/Projects/FTC/data/DetailedSurveyRoutesCSV/"; // prefix for csv files (numbered 0-n)
+String baseStringSuffix = "_251016.csv";//"";
+int selectOneFile = 1; // -1 to draw all tracks at once, 0+ to draw each track individually
+int maxFile = 1;
 
 // world parameters
 PVector latLims = new PVector(51.5, 51.6);
@@ -89,7 +90,7 @@ void setup()
   {      
 
     // first process the driver
-    String filename = baseString + str(f) + ".csv";
+    String filename = baseString + str(f) + "D" + baseStringSuffix;
     readInFileDOTS(filename, palette[f], color(255,255,255,255));
   }
 
@@ -127,8 +128,8 @@ void readInFileDOTS(String filename, color minColor, color maxColor) {
   //println((Object[])route.getColumnTitles());
 
   // extract columns of data from the table
-  float [] lats = route.getFloatColumn("lat");//"LATITUDE");
-  float [] lons = route.getFloatColumn("long");//"LONGITUDE");    
+  float [] lats = route.getFloatColumn("LATITUDE");
+  float [] lons = route.getFloatColumn("LONGITUDE");    
   String [] modes = route.getStringColumn("Mode");
 
   // iterate over the records, clean them accordingly, and store them
