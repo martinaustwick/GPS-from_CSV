@@ -137,49 +137,36 @@ void setup()
     timeIndex = startMam;
 }
 
-void addVehicle(String filename, color myColor) throws FileNotFoundException {
-  AnimatedPointMarker vehicle = readInFileBasic(filename, "", true);
-  if (vehicle != null) {
-    //myColor = vehicleColour;
-    vehicle.square = true;
-    vehicle.setColor(myColor);
-    vehicle.setStrokeColor(color(0, 0, 0));
-    vehicle.setStrokeWeight(0);
-    color newColor = (myColor & 0xffffff) | (50 << 24);
-    vehicle.getTail().setColor(newColor);
-    mm_agents.addMarker(vehicle);
-    mm_heatmap.addMarker(vehicle.getTail());
-  }
-}
+void draw()
+{  
+  background(0);
 
-void addDriver(String filename, color myColor) throws FileNotFoundException {
-  AnimatedPointMarker driver = readInFileBasic(filename, "", true);
-  // myColor = palette[int(random(palette.length))];//driverColour;
-  driver.setColor(myColor);
-  driver.setStrokeWeight(2);
-  driver.setStrokeColor(color(0, 0, 0));
-  color newColor = (myColor & 0xffffff) | (100 << 24);
-  driver.getTail().setColor(newColor);
-  mm_agents.addMarker(driver);
-  mm_heatmap.addMarker(driver.getTail());
-}
+  if (! paused) {
 
-// for inrix data
-void addDrivers(String filename, color myColor) throws FileNotFoundException {
-  List <AnimatedPointMarker> drivers = readInFileInrix(filename, "", true);
-  for (AnimatedPointMarker driver : drivers) {
-    myColor = palette[int(random(palette.length))];//driverColour;
-    driver.setColor(myColor);
-    driver.setStrokeWeight(2);
-    driver.setStrokeColor(color(0, 0, 0));
-    color newColor = (myColor & 0xffffff) | (100 << 24);
-    driver.getTail().setColor(newColor);
-    mm_agents.addMarker(driver);
-    mm_heatmap.addMarker(driver.getTail());
-    colorIndex = colorIndex + 1; // only increase index if it's successfully read in
-    if (colorIndex > palette.length)
-      colorIndex = 0;
+    // only proceed if the time is within the bounds
+    if (timeIndex <= maxTime && timeIndex >=minTime) {
+
+      MarkerManager [] thingsToUpdate = new MarkerManager [] {mm_invisible, mm_agents, mm_deliveries};
+      for (MarkerManager m : thingsToUpdate) {
+        List<Object> myPickups = m.getMarkers();  
+        for (int i = 0; i < myPickups.size(); i++) {
+          Object o = myPickups.get(i);
+          if (o instanceof AnimatedPointMarker)
+            ((AnimatedPointMarker)o).setToTime(timeIndex);
+          else if (o instanceof TimedLineMarker)
+            ((TimedLineMarker)o).checkIfUpdated(timeIndex);
+          else if (o instanceof TimedPointMarker)
+            ((TimedPointMarker)o).checkIfUpdated(timeIndex);
+        }
+      }
+    }
+
+    // update the time index
+    timeIndex += mamChange; // ...but don't exceed the temporal boundaries
+    timeIndex = min(max(timeIndex, minTime), maxTime);
   }
+  map.draw();
+  elClocko(); // visualise the time
 }
 
 
@@ -220,8 +207,8 @@ void readInDir(String dirTrace, String dirTraceSuffix,
         readInFilePointsMING(filename, color(200, 200, 0), color(200, 0, 0), mm_deliveries, 3, 2);
 
         filename = dirManifest + "case" + str(f) + ".txt";
+        readInFileTimedPoints(filename, color(0,0,0,0), "DeliveryTime", mm_deliveries);
         readInFileBlinkingPointsWithAttributes(filename, setUpAttributeMapping(), "Time", mm_deliveries);
-        readInFileTimedPoints(filename, color(255,0,0), "DeliveryTime", mm_deliveries);
         //readInFileBlinkingPoints(filename, myColor, newColor, mm_deliveries);
         //readInFilePointsAsRings(filename, myColor, newColor, mm_deliveries, mm_invisible);
       } 
@@ -231,9 +218,9 @@ void readInDir(String dirTrace, String dirTraceSuffix,
   }
 
   // add the MarkerManagers to the map itself
+  map.addMarkerManager(mm_heatmap);
   map.addMarkerManager(mm_agents);
   map.addMarkerManager(mm_deliveries);
-  map.addMarkerManager(mm_heatmap);
 
   // defining the limits of the window
   lonLims = bufferVals(lonLims, 0.2);
@@ -241,48 +228,10 @@ void readInDir(String dirTrace, String dirTraceSuffix,
   println(latLims + "\n" + lonLims);
 }
 
-HashMap <String, Integer> setUpAttributeMapping(){
-   HashMap <String, Integer> result = new HashMap <String, Integer> ();
-   result.put("9AM", color(255,0,0,150));
-   result.put("10AM", color(255,255,0,150));
-   result.put("12PM", color(0,255,0,150));
-   result.put("None", color(0,0,255,150));
-   return result;
-}
 
-void draw()
-{  
-  background(0);
-
-  if (! paused) {
-
-    // only proceed if the time is within the bounds
-    if (timeIndex <= maxTime && timeIndex >=minTime) {
-
-      MarkerManager [] thingsToUpdate = new MarkerManager [] {mm_deliveries, mm_invisible, mm_agents};
-      for (MarkerManager m : thingsToUpdate) {
-        List<Object> myPickups = m.getMarkers();  
-        for (int i = 0; i < myPickups.size(); i++) {
-          Object o = myPickups.get(i);
-          if (o instanceof AnimatedPointMarker)
-            ((AnimatedPointMarker)o).setToTime(timeIndex);
-          else if (o instanceof TimedLineMarker)
-            ((TimedLineMarker)o).checkIfUpdated(timeIndex);
-          else if (o instanceof TimedPointMarker)
-            ((TimedPointMarker)o).checkIfUpdated(timeIndex);
-        }
-      }
-    }
-
-    // update the time index
-    timeIndex += mamChange; // ...but don't exceed the temporal boundaries
-    timeIndex = min(max(timeIndex, minTime), maxTime);
-  }
-  map.draw();
-  elClocko(); // visualise the time
-}
-
-// control the visualisation
+//////////////////////////////////////////////
+// INTERACTIVITY /////////////////////////////
+//////////////////////////////////////////////
 void keyPressed() {
   if (key == ' ') {
     paused = !paused;

@@ -2,6 +2,7 @@ class BlinkingPointMarker extends SimplePointMarker {
 
   String myName;
   color myColor;
+  color textColor = color(0, 0, 0, 100);
   boolean paused = false;
   int myTime = -1;
   
@@ -42,6 +43,10 @@ class BlinkingPointMarker extends SimplePointMarker {
   void setColor(color c){
     myColor = c; 
   }
+  
+  void setTextColor(color c){
+    textColor = c;
+  }
 
   /* Overrides drawing function to add the label
   */
@@ -76,7 +81,7 @@ class BlinkingPointMarker extends SimplePointMarker {
         if (font != null) {
              pg.textFont(font);
         }
-        pg.fill(color(0, 0, 0, 100));
+        pg.fill(textColor);
         pg.text(myName, Math.round(x + space * 0.75f + strokeWeight / 2), 
           Math.round(y + strokeWeight / 2 - space * 0.75f));
       }

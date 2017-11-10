@@ -2,6 +2,7 @@ class TimedPointMarker extends SimplePointMarker {
 
   String myName;
   color myColor;
+  color textColor;
   boolean paused = false;
   int myTime = -1;
 
@@ -41,6 +42,10 @@ class TimedPointMarker extends SimplePointMarker {
   void setColor(color c) {
     myColor = c;
   }
+  
+  void setTextColor(color c){
+    textColor = c; 
+  }
 
   /* Overrides drawing function to add the label
    */
@@ -66,8 +71,7 @@ class TimedPointMarker extends SimplePointMarker {
       if (font != null) {
         pg.textFont(font);
       }
-      pg.fill(color(0, 0, 0, 100));
-      pg.stroke(color(255,255,255));
+      pg.fill(textColor);
       pg.text(myName, Math.round(x + space * 0.75f + strokeWeight / 2), 
         Math.round(y + strokeWeight / 2 - space * 0.75f));
     }

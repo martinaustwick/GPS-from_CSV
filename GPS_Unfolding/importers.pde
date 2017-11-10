@@ -98,14 +98,14 @@ AnimatedPointMarker readInFileModes(String filename, color walkColor, color stop
   MarkerManager manager) throws FileNotFoundException {
 
   // open the Driver file and read it into a table
-  Table route = loadTable(filename, "header,csv");
+  Table route = loadTable(filename, "header,tsv");
 
   // visualise the names of the columns
   println((Object[])route.getColumnTitles());
 
   // extract columns of data from the table
-  float [] lats = route.getFloatColumn("lat");
-  float [] lons = route.getFloatColumn("long");
+  float [] lats = route.getFloatColumn("Lat");
+  float [] lons = route.getFloatColumn("Long");
   String [] arrivals = route.getStringColumn("Time");
   String [] modes = route.getStringColumn("Mode");
   // Location stopLocation = null;
@@ -392,7 +392,7 @@ void readInFileTimedPoints(String filename, color myColor, String attribute, Mar
     int myTime = lastTime;
     if (time.contains(":")) {
       String [] timeLine = split(time, ":");
-      myTime = 3600*int(timeLine[0].trim()) + 60*(int(timeLine[1].trim()) - 2) ;
+      myTime = 3600*int(timeLine[0].trim()) + 60*(int(timeLine[1].trim()) ) ;
     } else
       myTime = myTime + 1;
     lastTime = myTime;
@@ -402,15 +402,16 @@ void readInFileTimedPoints(String filename, color myColor, String attribute, Mar
     if (findLimits) checkLimits(lats, lons, i, lastTime);
 
     PositionRecord myPr = new PositionRecord(lastTime, new Location(lats[i], lons[i]));
-    BlinkingPointMarker sm = new BlinkingPointMarker(myPr, time);
+    println(time  + "\t" + lastTime);
+    TimedPointMarker sm = new TimedPointMarker(myPr, time, myColor);
     //  sm.setRadius(mode.equals("W") ? walkingWidth : drivingWidth);
     //   sm.setColor(interpolateColor(((float)i)/lons.length, openColor, closedColor));
-    color newColor = myColor;
-    sm.setColor(newColor);//closedColor);
+    sm.setTextColor(color(255,0,0));
     sm.setRadius(1);
     manager.addMarker(sm);
   }
 }
+
 
 // read in a CSV tracking movement patterns and store its spatiotemporal path
 // in a linked list of PositionRecords. In particular, read in the edges 
@@ -421,7 +422,7 @@ void readInFilePointsMING(String filename, color walkColor, color lineColor,
   // open the Driver file and read it into a table
   Table route = loadTable(filename, "header,tsv");
   if (((Object[])route.getColumnTitles()).length <= 1)
-    route = loadTable(filename, "header,csv");
+    route = loadTable(filename, "header,tsv");
 
   // visualise the names of the columns
   println((Object[])route.getColumnTitles());

@@ -8,6 +8,7 @@ class AnimatedPointMarker extends SimplePointMarker {
   PositionRecord head;
   SimpleLinesMarker myTail = null;
   color myColor;
+  color textColor = color(255);
 
   boolean square = false;
 
@@ -88,6 +89,10 @@ class AnimatedPointMarker extends SimplePointMarker {
     myColor = c; 
   }
 
+  void setTextColor(color c){
+    textColor = c;
+  }
+
   // access to the trace tail
   SimpleLinesMarker getTail() { 
       return myTail;
@@ -121,7 +126,7 @@ class AnimatedPointMarker extends SimplePointMarker {
            pg.textFont(font);
       }
       
-      pg.fill(color(0, 0, 255));
+      pg.fill(textColor);
       pg.text(myName, Math.round(x + space * 0.75f + strokeWeight / 2), 
           Math.round(y + strokeWeight / 2 - space * 0.75f));
 

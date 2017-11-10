@@ -1,3 +1,62 @@
+void addVehicle(String filename, color myColor) throws FileNotFoundException {
+  AnimatedPointMarker vehicle = readInFileBasic(filename, "", true);
+  if (vehicle != null) {
+    //myColor = vehicleColour;
+    vehicle.square = true;
+    vehicle.setColor(myColor);
+    vehicle.setStrokeColor(color(0, 0, 0));
+    vehicle.setStrokeWeight(0);
+    color newColor = (myColor & 0xffffff) | (50 << 24);
+    vehicle.getTail().setColor(newColor);
+    mm_agents.addMarker(vehicle);
+    mm_heatmap.addMarker(vehicle.getTail());
+  }
+}
+
+void addDriver(String filename, color myColor) throws FileNotFoundException {
+  AnimatedPointMarker driver = readInFileBasic(filename, "", true);
+  // myColor = palette[int(random(palette.length))];//driverColour;
+  driver.setColor(myColor);
+  driver.setStrokeWeight(2);
+  driver.setStrokeColor(color(0, 0, 0));
+  color newColor = (myColor & 0xffffff) | (100 << 24);
+  driver.getTail().setColor(newColor);
+  mm_agents.addMarker(driver);
+  mm_heatmap.addMarker(driver.getTail());
+}
+
+// for inrix data
+void addDrivers(String filename, color myColor) throws FileNotFoundException {
+  List <AnimatedPointMarker> drivers = readInFileInrix(filename, "", true);
+  for (AnimatedPointMarker driver : drivers) {
+    myColor = palette[int(random(palette.length))];//driverColour;
+    driver.setColor(myColor);
+    driver.setStrokeWeight(2);
+    driver.setStrokeColor(color(0, 0, 0));
+    color newColor = (myColor & 0xffffff) | (100 << 24);
+    driver.getTail().setColor(newColor);
+    mm_agents.addMarker(driver);
+    mm_heatmap.addMarker(driver.getTail());
+    colorIndex = colorIndex + 1; // only increase index if it's successfully read in
+    if (colorIndex > palette.length)
+      colorIndex = 0;
+  }
+}
+
+
+
+
+HashMap <String, Integer> setUpAttributeMapping(){
+   HashMap <String, Integer> result = new HashMap <String, Integer> ();
+   result.put("9AM", color(255,0,0,150));
+   result.put("10AM", color(255,255,0,150));
+   result.put("12PM", color(0,255,0,150));
+   result.put("None", color(0,0,255,150));
+   return result;
+}
+
+
+
 // OTHER
 
 /*color[] palette = {color(166,206,227), color(31,120,180), 
