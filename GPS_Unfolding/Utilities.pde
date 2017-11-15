@@ -1,3 +1,8 @@
+public interface TimedMarker{
+  void setToTime(int t);  
+}
+
+
 void addVehicle(String filename, color myColor) throws FileNotFoundException {
   AnimatedPointMarker vehicle = readInFileBasic(filename, "", true);
   if (vehicle != null) {
@@ -48,10 +53,10 @@ void addDrivers(String filename, color myColor) throws FileNotFoundException {
 
 HashMap <String, Integer> setUpAttributeMapping(){
    HashMap <String, Integer> result = new HashMap <String, Integer> ();
-   result.put("9AM", color(255,0,0,150));
-   result.put("10AM", color(255,255,0,150));
-   result.put("12PM", color(0,255,0,150));
-   result.put("None", color(0,0,255,150));
+   result.put("9AM", color(215,25,28,250));
+   result.put("10AM", color(253,174,97,250));
+   result.put("12PM", color(171,221,164, 250));
+   result.put("None", color(43,131,186,250));
    return result;
 }
 

@@ -2,19 +2,12 @@
 // contain a series of PositionRecords defining a spatiotemporal record of
 // locations. The extended marker can be defined with or without visualising
 // a trace of the current "trail" of its movement
-class AnimatedPointMarker extends SimplePointMarker {
+class AnimatedPointMarker extends FancyPointMarker implements TimedMarker {
 
-  String myName;
   PositionRecord head;
   SimpleLinesMarker myTail = null;
-  color myColor;
-  color textColor = color(255);
 
   boolean square = false;
-
-  PFont font;
-  float fontSize = 12;
-  int space = 6;
 
   // constructor
   AnimatedPointMarker(PositionRecord start, String name, boolean hasTail) {
@@ -82,15 +75,6 @@ class AnimatedPointMarker extends SimplePointMarker {
 
       // Otherwise, it either hasn't started happening or has finished happening!
       // Do nothing!
-  }
-
-  // set the color of the marker
-  void setColor(color c){
-    myColor = c; 
-  }
-
-  void setTextColor(color c){
-    textColor = c;
   }
 
   // access to the trace tail

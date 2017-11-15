@@ -151,12 +151,8 @@ void draw()
         List<Object> myPickups = m.getMarkers();  
         for (int i = 0; i < myPickups.size(); i++) {
           Object o = myPickups.get(i);
-          if (o instanceof AnimatedPointMarker)
-            ((AnimatedPointMarker)o).setToTime(timeIndex);
-          else if (o instanceof TimedLineMarker)
-            ((TimedLineMarker)o).checkIfUpdated(timeIndex);
-          else if (o instanceof TimedPointMarker)
-            ((TimedPointMarker)o).checkIfUpdated(timeIndex);
+          if (o instanceof TimedMarker)
+            ((TimedMarker)o).setToTime(timeIndex);
         }
       }
     }
@@ -204,10 +200,10 @@ void readInDir(String dirTrace, String dirTraceSuffix,
         color newColor = (myColor & 0xffffff) | (100 << 24); 
 
         filename = dirManifest + "output_case" + str(f) + dirManifestSuffix;
-        readInFilePointsMING(filename, color(200, 200, 0), color(200, 0, 0), mm_deliveries, 3, 2);
+        readInFilePointsMING(filename, color(215,25,28,180), color(255,255,191,180), mm_agents, 3, 3);
 
         filename = dirManifest + "case" + str(f) + ".txt";
-        readInFileTimedPoints(filename, color(0,0,0,0), "DeliveryTime", mm_deliveries);
+        readInFileTimedPoints(filename, color(255), "DeliveryTime", mm_deliveries);
         readInFileBlinkingPointsWithAttributes(filename, setUpAttributeMapping(), "Time", mm_deliveries);
         //readInFileBlinkingPoints(filename, myColor, newColor, mm_deliveries);
         //readInFilePointsAsRings(filename, myColor, newColor, mm_deliveries, mm_invisible);

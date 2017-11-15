@@ -1,4 +1,4 @@
-class TimedLineMarker extends SimpleLinesMarker {
+class TimedLineMarker extends SimpleLinesMarker implements TimedMarker {
 
   String myName;
   color myColor;
@@ -26,7 +26,7 @@ class TimedLineMarker extends SimpleLinesMarker {
   // checks to determine whether the time step is beyond the point of completion
   // and the marker is labeled "fulfilled"
 
-  void checkIfUpdated(int mam) {
+  void setToTime(int mam) {
     if (mam > myTime) {
       paused = true;
     } else {

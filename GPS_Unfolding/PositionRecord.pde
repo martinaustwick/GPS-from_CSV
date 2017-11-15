@@ -1,4 +1,4 @@
-// Object to hold a point in spacetime, with references to the previous
+// LinkedList Object to hold a point in spacetime, with references to the previous
 // and subsequent spacetime points
 class PositionRecord {
  

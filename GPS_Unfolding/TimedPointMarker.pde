@@ -1,8 +1,5 @@
-class TimedPointMarker extends SimplePointMarker {
+class TimedPointMarker extends FancyPointMarker implements TimedMarker {
 
-  String myName;
-  color myColor;
-  color textColor;
   boolean paused = false;
   int myTime = -1;
 
@@ -16,18 +13,20 @@ class TimedPointMarker extends SimplePointMarker {
 
   TimedPointMarker(PositionRecord start, String name, color myColor) {
     super(start.position);
-    //    setColor(palette[int(random(palette.length))]);
-    //    setStrokeColor(color(0,0,0,50));//palette[int(random(palette.length))]);
     setColor(myColor);
     setStrokeColor(myColor);
     myName = name;
     myTime = start.time;
   }
 
+  TimedPointMarker(PositionRecord start) {
+    this(start, "", color(100, 100, 100));
+  }
+
   // checks to determine whether the time step is beyond the point of completion
   // and the marker is labeled "fulfilled"
 
-  void checkIfUpdated(int mam) {
+  void setToTime(int mam) {
     if (mam > myTime) {
       paused = true;
     } else {
@@ -35,17 +34,6 @@ class TimedPointMarker extends SimplePointMarker {
     }
   }
 
-  TimedPointMarker(PositionRecord start) {
-    this(start, "", color(100, 100, 100));
-  }
-
-  void setColor(color c) {
-    myColor = c;
-  }
-  
-  void setTextColor(color c){
-    textColor = c; 
-  }
 
   /* Overrides drawing function to add the label
    */
