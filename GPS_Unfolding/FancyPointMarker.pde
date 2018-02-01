@@ -12,10 +12,14 @@ public class FancyPointMarker extends SimplePointMarker {
 
   public FancyPointMarker(Location l){
       super(l);
+      highlightColor = color(0,0,0,0);
+      strokeColor = color(0,0,0,0);
+      strokeWeight = 0;
   }
   
   void setColor(color c) {
     myColor = c;
+    super.setColor(c);
   }
 
   void setTextColor(color c) {

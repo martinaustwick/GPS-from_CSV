@@ -15,7 +15,7 @@ class AnimatedPointMarker extends FancyPointMarker implements TimedMarker {
       head = start;
       
       // set some appearance parameters
-      color myColor = palette[int(random(palette.length))];
+      color myColor = color(150,150,0,200);//palette[int(random(palette.length))];
       setColor(myColor);
       setStrokeColor(myColor);
       myName = name;
@@ -24,8 +24,10 @@ class AnimatedPointMarker extends FancyPointMarker implements TimedMarker {
       if(hasTail){
         myTail = new SimpleLinesMarker();
         myTail.setStrokeWeight((int)strokoo);
-        myTail.setColor(color(250, 250,250,70));//250, 250, 70));
+        myTail.setColor(color(250, 250,100,3));//250, 250, 70));
       }
+      
+      radius = 5;
   }
 
   // constructor
@@ -89,6 +91,8 @@ class AnimatedPointMarker extends FancyPointMarker implements TimedMarker {
       if (isHidden())
            return;
 
+      if(head.prev == null) return;
+      else if(head.next == null) return;
       pg.pushStyle();
       pg.strokeWeight(this.strokeWeight);
       if (isSelected()) {

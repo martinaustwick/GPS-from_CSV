@@ -52,26 +52,112 @@ List <AnimatedPointMarker> readInFileInrix(String filename, String name, boolean
 
   // open the Driver file and read it into a table
   Table route = loadTable(filename, "header");
-  //println((Object[])route.getColumnTitles()); // visualise the names of the columns
+  println((Object[])route.getColumnTitles()); // visualise the names of the columns
 
   // extract columns of data from the table
+  String [] tripId = route.getStringColumn("trip_id");
   float [] lats = route.getFloatColumn("Latitude");
   float [] lons = route.getFloatColumn("Longitude");
   float [] wpSequence = route.getFloatColumn("WaypointSequence");
   String [] time = route.getStringColumn("CaptureDate");
 
   PositionRecord prevRecord = null;
+  String currentTrip = "";
 
   // iterate over the records, clean them accordingly, and store them
   for (int i=1; i<lons.length; i++)
   {
 
+    if(currentTrip.length() < 1 && wpSequence[i] != 0) continue;
+    
     // check to determine if we've started on a new record
     if (wpSequence[i] == 0 && prevRecord != null) {
       PositionRecord head = getHead(prevRecord); // We have: create the new marker
       results.add(new AnimatedPointMarker(head, name, traces));
       prevRecord = null;
+      currentTrip = tripId[i];
     }
+
+    // extract time information
+    
+    // FOR RAW DATA
+//    String fullTimeBit = split(time[i], "T")[1]; 
+//    String shortTimeBit = split(fullTimeBit, ".")[0];
+//    String [] timeLine = split(shortTimeBit, ":");
+
+    String fullTimeBit = split(time[i], " ")[1].replace('\"', ' '); // FOR PROCESSED DATA FROM DATABASE
+    String [] timeLine = split(fullTimeBit, ":");
+    int myTime = 3600*int(timeLine[0]) + 60*int(timeLine[1]) + int(timeLine[2]) - 60;
+
+    // adjust the map to the limits of the area and time
+    if (findLimits) checkLimits(lats, lons, i, myTime);
+
+    // save the record as a PositionRecord
+    PositionRecord pr = new PositionRecord( myTime, new Location(lats[i], lons[i]));
+    pr.setPrev(prevRecord);
+    prevRecord = pr;
+  }
+
+  return results;
+}
+
+// read in a CSV tracking movement patterns and store its spatiotemporal path
+// in a linked list of PositionRecords. Suitable for a datafile with multiple
+// records stored within it
+List <FancyPointMarker> readInStartAndEndpointsInrix(String filename, String name, boolean traces, color startPointCol, color endPointCol) throws FileNotFoundException {
+
+  List <FancyPointMarker> results = new ArrayList <FancyPointMarker> ();
+
+  // open the Driver file and read it into a table
+  Table route = loadTable(filename, "header");
+  println((Object[])route.getColumnTitles()); // visualise the names of the columns
+
+  // extract columns of data from the table
+  float [] lats = route.getFloatColumn("Latitude");
+  float [] lons = route.getFloatColumn("Longitude");
+  float [] wpSequence = route.getFloatColumn("WaypointSequence");
+
+  Location previousPoint = null;
+
+  // iterate over the records, clean them accordingly, and store them
+  for (int i=1; i<lons.length; i++)
+  {
+   
+    Location tempLoc = new Location(lats[i], lons[i]);
+    // check to determine if we've started on a new trip
+    if (wpSequence[i] == 0) {
+      if(previousPoint != null){
+        FancyPointMarker endPoint = new FancyPointMarker(previousPoint);
+        endPoint.setColor(endPointCol);
+        results.add(endPoint);
+      }
+      FancyPointMarker startPoint = new FancyPointMarker(tempLoc);
+      startPoint.setColor(startPointCol);
+     // results.add(startPoint);
+  }
+  previousPoint = tempLoc;
+  }
+
+  return results;
+}
+
+AnimatedPointMarker readInFileInrixParitioned(String filename, String name, boolean traces) throws FileNotFoundException {
+
+  // open the Driver file and read it into a table
+  Table route = loadTable(filename, "csv");
+  //println((Object[])route.getColumnTitles()); // visualise the names of the columns
+
+  // extract columns of data from the table
+  float [] lats = route.getFloatColumn(5);
+  float [] lons = route.getFloatColumn(6);
+  float [] wpSequence = route.getFloatColumn(1);
+  String [] time = route.getStringColumn(2);
+
+  PositionRecord prevRecord = null;
+
+  // iterate over the records, clean them accordingly, and store them
+  for (int i=0; i<lons.length; i++)
+  {
 
     // extract time information
     String fullTimeBit = split(time[i], "T")[1];
@@ -88,7 +174,7 @@ List <AnimatedPointMarker> readInFileInrix(String filename, String name, boolean
     prevRecord = pr;
   }
 
-  return results;
+  return new AnimatedPointMarker(getHead(prevRecord), name, traces);
 }
 
 // read in a CSV tracking movement patterns and store its spatiotemporal path
@@ -198,7 +284,7 @@ void readInFilePointsAsRings_EXPERIMENTAL(String filename, color walkColor, colo
 
   // keeps track of the beginning of the given ring
   PositionRecord previousStop = null;
-  PositionRecord parkingSpace = null;
+  //PositionRecord parkingSpace = null;
 
   int numRings = 0;
 
@@ -236,8 +322,8 @@ void readInFilePointsAsRings_EXPERIMENTAL(String filename, color walkColor, colo
     if (mode.equals("Walking")) {
       PositionRecord walkPr = new PositionRecord( myTime, myLoc);
       walkPr.setPrev(previousStop);
-      if (previousStop == null)
-        parkingSpace = walkPr;
+     // if (previousStop == null)
+     //   parkingSpace = walkPr;
       previousStop = walkPr;
     }
 
@@ -268,7 +354,7 @@ void readInFilePointsAsRings_EXPERIMENTAL(String filename, color walkColor, colo
       }
 
       previousStop = null;
-      parkingSpace = null;
+ //     parkingSpace = null;
     }
   }
 
@@ -290,7 +376,7 @@ void readInFileBlinkingPoints(String filename, color openColor, color closedColo
   // extract columns of data from the table
   float [] lats = route.getFloatColumn("lat");//"LATITUDE");
   float [] lons = route.getFloatColumn("long");//"LONGITUDE");    
-  String [] modes = route.getStringColumn("Mode");
+  //String [] modes = route.getStringColumn("Mode");
   //  String [] departures = route.getStringColumn("Leave");
   String [] arrivals = route.getStringColumn("Time");
 
@@ -301,7 +387,7 @@ void readInFileBlinkingPoints(String filename, color openColor, color closedColo
   {
 
 
-    String mode = modes[i];
+    //String mode = modes[i];
 
     int myTime = lastTime;
     if ((arrivals[i]).length() > 0 && arrivals[i].contains(":")) {
